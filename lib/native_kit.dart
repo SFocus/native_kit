@@ -20,6 +20,9 @@ export 'src/components/nk_button/nk_button.dart';
 // NKSegmentedControl
 export 'src/components/nk_segmented_control/nk_segmented_control.dart';
 
+// NKIcon
+export 'src/components/nk_icon/nk_icon.dart';
+
 class NativeKit {
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();
