@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
+import 'nk_slider_tick.dart';
+
+export 'nk_slider_tick.dart';
 
 /// A native iOS-style slider widget.
 ///
@@ -55,6 +59,24 @@ class NKSlider extends StatefulWidget {
   /// The height of the slider widget.
   final double height;
 
+  /// Track style (standard or thumbless). iOS 26+ only, ignored on earlier versions.
+  final NKSliderTrackStyle trackStyle;
+
+  /// Tick marks on the track. iOS 26+ only.
+  final List<NKSliderTick>? ticks;
+
+  /// Number of evenly-spaced ticks. Alternative to [ticks]. iOS 26+ only.
+  final int? numberOfTicks;
+
+  /// If true, the slider only allows values at tick positions. iOS 26+ only.
+  final bool allowsTickValuesOnly;
+
+  /// A neutral/anchor value on the track fill. iOS 26+ only.
+  final double? neutralValue;
+
+  /// Restricts the draggable range. Tuple of (min, max). iOS 26+ only.
+  final (double, double)? enabledRange;
+
   const NKSlider({
     super.key,
     required this.value,
@@ -69,6 +91,12 @@ class NKSlider extends StatefulWidget {
     this.thumbColor,
     this.enabled = true,
     this.height = 44.0,
+    this.trackStyle = NKSliderTrackStyle.standard,
+    this.ticks,
+    this.numberOfTicks,
+    this.allowsTickValuesOnly = false,
+    this.neutralValue,
+    this.enabledRange,
   });
 
   @override
@@ -111,11 +139,20 @@ class _NKSliderState extends State<NKSlider>
     if (oldWidget.min != widget.min || oldWidget.max != widget.max) {
       _setRange(widget.min, widget.max);
     }
+    if (oldWidget.trackStyle != widget.trackStyle ||
+        !listEquals(oldWidget.ticks, widget.ticks) ||
+        oldWidget.numberOfTicks != widget.numberOfTicks ||
+        oldWidget.allowsTickValuesOnly != widget.allowsTickValuesOnly ||
+        oldWidget.neutralValue != widget.neutralValue ||
+        oldWidget.enabledRange != widget.enabledRange) {
+      _setTrackConfiguration();
+    }
   }
 
   Future<void> _setValue(double value) async {
     try {
-      await channel?.invokeMethod('setValue', {'value': value, 'animated': true});
+      await channel
+          ?.invokeMethod('setValue', {'value': value, 'animated': true});
     } catch (e) {
       debugPrint('Failed to update slider value: $e');
     }
@@ -137,6 +174,25 @@ class _NKSliderState extends State<NKSlider>
     }
   }
 
+  Future<void> _setTrackConfiguration() async {
+    try {
+      await channel?.invokeMethod('setTrackConfiguration', {
+        'trackStyle': widget.trackStyle.name,
+        if (widget.ticks != null)
+          'ticks': widget.ticks!.map((t) => t.toMap()).toList(),
+        if (widget.numberOfTicks != null) 'numberOfTicks': widget.numberOfTicks,
+        'allowsTickValuesOnly': widget.allowsTickValuesOnly,
+        if (widget.neutralValue != null) 'neutralValue': widget.neutralValue,
+        if (widget.enabledRange != null) ...{
+          'enabledRangeMin': widget.enabledRange!.$1,
+          'enabledRangeMax': widget.enabledRange!.$2,
+        },
+      });
+    } catch (e) {
+      debugPrint('Failed to update slider track configuration: $e');
+    }
+  }
+
   Map<String, dynamic> _buildCreationParams() {
     return {
       'value': widget.value,
@@ -150,6 +206,16 @@ class _NKSliderState extends State<NKSlider>
         'inactiveColor': widget.inactiveColor!.toARGB32(),
       if (widget.thumbColor != null)
         'thumbColor': widget.thumbColor!.toARGB32(),
+      'trackStyle': widget.trackStyle.name,
+      if (widget.ticks != null)
+        'ticks': widget.ticks!.map((t) => t.toMap()).toList(),
+      if (widget.numberOfTicks != null) 'numberOfTicks': widget.numberOfTicks,
+      'allowsTickValuesOnly': widget.allowsTickValuesOnly,
+      if (widget.neutralValue != null) 'neutralValue': widget.neutralValue,
+      if (widget.enabledRange != null) ...{
+        'enabledRangeMin': widget.enabledRange!.$1,
+        'enabledRangeMax': widget.enabledRange!.$2,
+      },
     };
   }
 
@@ -163,6 +229,7 @@ class _NKSliderState extends State<NKSlider>
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
+          gestureRecognizers: eagerGestureRecognizers,
         ),
         fallbackBuilder: (context) => CupertinoSlider(
           value: widget.value,

@@ -87,6 +87,10 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         if let color = arguments["thumbColor"] as? Int64 {
             slider.thumbTintColor = UIColor.fromARGB(color)
         }
+
+        if #available(iOS 26.0, *) {
+            configureTrack(from: arguments)
+        }
     }
 
     private func setupSlider() {
@@ -109,6 +113,39 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         guard let step = step, step > 0 else { return value }
         let min = slider.minimumValue
         return (((value - min) / step).rounded()) * step + min
+    }
+
+    @available(iOS 26.0, *)
+    private func configureTrack(from arguments: [String: Any]) {
+        // Parse ticks
+        var trackConfig: UISlider.TrackConfiguration?
+        if let ticksData = arguments["ticks"] as? [[String: Any]] {
+            let ticks = ticksData.map { data -> UISlider.TrackConfiguration.Tick in
+                let position = Float(data["position"] as? Double ?? 0.0)
+                var tick = UISlider.TrackConfiguration.Tick(position: position)
+                tick.title = data["title"] as? String
+                if let iconDict = data["icon"] as? [String: Any],
+                   let parsed = NKSymbolUtils.parseIcon(from: iconDict) {
+                    tick.image = NKSymbolUtils.createImage(name: parsed.name, config: parsed.config)
+                }
+                return tick
+            }
+            trackConfig = UISlider.TrackConfiguration(ticks: ticks)
+        } else if let numberOfTicks = arguments["numberOfTicks"] as? Int {
+            trackConfig = UISlider.TrackConfiguration(numberOfTicks: numberOfTicks)
+        }
+
+        if var config = trackConfig {
+            config.allowsTickValuesOnly = arguments["allowsTickValuesOnly"] as? Bool ?? false
+            if let neutral = arguments["neutralValue"] as? Double {
+                config.neutralValue = Float(neutral)
+            }
+            if let enabledMin = arguments["enabledRangeMin"] as? Double,
+               let enabledMax = arguments["enabledRangeMax"] as? Double {
+                config.enabledRange = Float(enabledMin)...Float(enabledMax)
+            }
+            slider.trackConfiguration = config
+        }
     }
 
     @objc private func sliderValueChanged() {
@@ -153,6 +190,12 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
             let max = Float(args["max"] as? Double ?? 1.0)
             slider.minimumValue = min
             slider.maximumValue = max
+            result(nil)
+
+        case "setTrackConfiguration":
+            if #available(iOS 26.0, *) {
+                configureTrack(from: args)
+            }
             result(nil)
 
         default:
