@@ -11,6 +11,10 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKTabBar
       let tabBarFactory = NKTabBarViewFactory(registrar: registrar)
       registrar.register(tabBarFactory, withId: "native_kit/tab_bar_view")
+
+      // NKSwitch
+      let switchFactory = NKSwitchViewFactory(registrar: registrar)
+      registrar.register(switchFactory, withId: "native_kit/switch_view")
     }
   }
 
