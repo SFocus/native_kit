@@ -14,6 +14,9 @@ export 'src/components/nk_switch/nk_switch.dart';
 // NKSlider
 export 'src/components/nk_slider/nk_slider.dart';
 
+// NKButton
+export 'src/components/nk_button/nk_button.dart';
+
 class NativeKit {
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();

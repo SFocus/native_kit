@@ -19,6 +19,10 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKSlider
       let sliderFactory = NKSliderViewFactory(registrar: registrar)
       registrar.register(sliderFactory, withId: "native_kit/slider_view")
+
+      // NKButton
+      let buttonFactory = NKButtonViewFactory(registrar: registrar)
+      registrar.register(buttonFactory, withId: "native_kit/button_view")
     }
   }
 
