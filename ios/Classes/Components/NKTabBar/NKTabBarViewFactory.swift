@@ -103,6 +103,21 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     }
 
     private func configureAppearance(_ tabBar: UITabBar) {
+        // On iOS 26+, skip custom appearance to let Liquid Glass apply automatically.
+        // Only set explicit colors if provided.
+        if #available(iOS 26.0, *) {
+            if let bgColor {
+                tabBar.backgroundColor = bgColor
+            }
+            if let selectedColor = selectedItemColor {
+                tabBar.tintColor = selectedColor
+            }
+            if let unselectedColor = unselectedItemColor {
+                tabBar.unselectedItemTintColor = unselectedColor
+            }
+            return
+        }
+
         let appearance = UITabBarAppearance()
         appearance.configureWithTransparentBackground()
 
@@ -205,6 +220,17 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
                 return
             }
             setBadge(index: index, badge: args["badge"] as? String)
+            result(nil)
+
+        case "setVisible":
+            guard let visible = args["visible"] as? Bool else {
+                result(FlutterError(code: "INVALID_ARGS", message: "Expected 'visible' bool", details: nil))
+                return
+            }
+            UIView.animate(withDuration: 0.25) { [weak self] in
+                self?.tabBar?.isHidden = !visible
+                self?.container.isHidden = !visible
+            }
             result(nil)
 
         default:

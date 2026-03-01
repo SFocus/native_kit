@@ -44,6 +44,12 @@ export 'src/components/nk_toast/nk_toast.dart';
 // NKToolbar
 export 'src/components/nk_toolbar/nk_toolbar.dart';
 
+// NKProgressView
+export 'src/components/nk_progress_view/nk_progress_view.dart';
+
+// NKDatePicker
+export 'src/components/nk_date_picker/nk_date_picker.dart';
+
 class NativeKit {
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();

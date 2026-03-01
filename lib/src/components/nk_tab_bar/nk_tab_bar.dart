@@ -57,6 +57,9 @@ class NKTabBar extends StatefulWidget {
   /// Height of the tab bar.
   final double? height;
 
+  /// Whether the tab bar is visible.
+  final bool isVisible;
+
   const NKTabBar({
     super.key,
     required this.items,
@@ -67,6 +70,7 @@ class NKTabBar extends StatefulWidget {
     this.selectedItemColor,
     this.unselectedItemColor,
     this.height,
+    this.isVisible = true,
   });
 
   @override
@@ -133,6 +137,10 @@ class _NKTabBarState extends State<NKTabBar>
       _updateSelectedIndex(widget.currentIndex);
     }
 
+    if (oldWidget.isVisible != widget.isVisible) {
+      _updateVisibility(widget.isVisible);
+    }
+
     _updateBadgesIfNeeded(oldWidget);
   }
 
@@ -142,6 +150,14 @@ class _NKTabBarState extends State<NKTabBar>
           oldWidget.items[i].badge != widget.items[i].badge) {
         _updateBadge(i, widget.items[i].badge);
       }
+    }
+  }
+
+  Future<void> _updateVisibility(bool visible) async {
+    try {
+      await channel?.invokeMethod('setVisible', {'visible': visible});
+    } catch (e) {
+      debugPrint('Failed to update visibility: $e');
     }
   }
 

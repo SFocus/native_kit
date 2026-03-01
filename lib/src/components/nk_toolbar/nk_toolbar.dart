@@ -38,6 +38,49 @@ class NKToolbarItem {
       };
 }
 
+/// Configuration for a search bar integrated into the toolbar.
+///
+/// When provided to [NKToolbar] or [SliverNKToolbar], a native
+/// `UISearchBar` is added to the navigation bar.
+class NKSearchBarConfig {
+  /// Placeholder text shown when the search field is empty.
+  final String? placeholder;
+
+  /// Called as the user types in the search field.
+  final ValueChanged<String>? onChanged;
+
+  /// Called when the user taps the search/return key.
+  final ValueChanged<String>? onSubmitted;
+
+  /// Called when the cancel button is tapped.
+  final VoidCallback? onCancelPressed;
+
+  /// Whether the search bar hides when scrolling (SliverNKToolbar only).
+  final bool hidesWhenScrolling;
+
+  /// Scope button titles for filtering search results.
+  final List<String> scopeTitles;
+
+  /// Called when the selected scope changes.
+  final ValueChanged<int>? onScopeChanged;
+
+  const NKSearchBarConfig({
+    this.placeholder,
+    this.onChanged,
+    this.onSubmitted,
+    this.onCancelPressed,
+    this.hidesWhenScrolling = true,
+    this.scopeTitles = const [],
+    this.onScopeChanged,
+  });
+
+  Map<String, dynamic> toMap() => {
+        if (placeholder != null) 'placeholder': placeholder,
+        'hidesWhenScrolling': hidesWhenScrolling,
+        if (scopeTitles.isNotEmpty) 'scopeTitles': scopeTitles,
+      };
+}
+
 /// Controls the navigation bar background appearance.
 enum NKToolbarAppearance {
   /// Default system appearance (opaque background with separator).
@@ -137,6 +180,10 @@ class NKToolbar extends StatefulWidget implements PreferredSizeWidget {
   /// The height of the navigation bar content (excluding status bar).
   final double height;
 
+  /// Optional search bar configuration. If set, a native search bar is
+  /// added below the navigation bar title.
+  final NKSearchBarConfig? searchBar;
+
   const NKToolbar({
     super.key,
     this.title,
@@ -150,6 +197,7 @@ class NKToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.appearance = NKToolbarAppearance.defaultAppearance,
     this.showSeparator = true,
     this.height = 44.0,
+    this.searchBar,
   });
 
   @override
@@ -179,6 +227,20 @@ class _NKToolbarState extends State<NKToolbar>
             widget.trailingItems[index].onPressed?.call();
           }
         }
+      case 'onSearchChanged':
+        if (call.arguments is String) {
+          widget.searchBar?.onChanged?.call(call.arguments as String);
+        }
+      case 'onSearchSubmitted':
+        if (call.arguments is String) {
+          widget.searchBar?.onSubmitted?.call(call.arguments as String);
+        }
+      case 'onSearchCancelled':
+        widget.searchBar?.onCancelPressed?.call();
+      case 'onScopeChanged':
+        if (call.arguments is int) {
+          widget.searchBar?.onScopeChanged?.call(call.arguments as int);
+        }
     }
   }
 
@@ -195,7 +257,8 @@ class _NKToolbarState extends State<NKToolbar>
         oldWidget.trailingItems.length != widget.trailingItems.length ||
         (oldWidget.onBackPressed == null) !=
             (widget.onBackPressed == null) ||
-        (oldWidget.leadingItem == null) != (widget.leadingItem == null)) {
+        (oldWidget.leadingItem == null) != (widget.leadingItem == null) ||
+        (oldWidget.searchBar == null) != (widget.searchBar == null)) {
       _update();
       return;
     }
@@ -233,6 +296,7 @@ class _NKToolbarState extends State<NKToolbar>
       'appearance': widget.appearance.name,
       'showSeparator': widget.showSeparator,
       'height': widget.prefersLargeTitles ? 96.0 : widget.height,
+      if (widget.searchBar != null) 'searchBar': widget.searchBar!.toMap(),
     };
   }
 
@@ -357,6 +421,9 @@ class SliverNKToolbar extends StatelessWidget {
   /// The background appearance style.
   final NKToolbarAppearance appearance;
 
+  /// Optional search bar configuration.
+  final NKSearchBarConfig? searchBar;
+
   const SliverNKToolbar({
     super.key,
     this.title,
@@ -367,6 +434,7 @@ class SliverNKToolbar extends StatelessWidget {
     this.tintColor,
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
+    this.searchBar,
   });
 
   @override
@@ -384,6 +452,7 @@ class SliverNKToolbar extends StatelessWidget {
         tintColor: tintColor,
         backgroundColor: backgroundColor,
         appearance: appearance,
+        searchBar: searchBar,
       ),
     );
   }
@@ -399,6 +468,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
   final Color? tintColor;
   final Color? backgroundColor;
   final NKToolbarAppearance appearance;
+  final NKSearchBarConfig? searchBar;
 
   static const _navBarHeight = 44.0;
   static const _largeTitleHeight = 52.0;
@@ -413,6 +483,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
     this.tintColor,
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
+    this.searchBar,
   });
 
   @override
@@ -436,6 +507,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
       tintColor: tintColor,
       backgroundColor: backgroundColor,
       appearance: appearance,
+      searchBar: searchBar,
     );
   }
 
@@ -449,6 +521,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
         tintColor != oldDelegate.tintColor ||
         backgroundColor != oldDelegate.backgroundColor ||
         appearance != oldDelegate.appearance ||
+        searchBar != oldDelegate.searchBar ||
         topPadding != oldDelegate.topPadding;
   }
 }
@@ -465,6 +538,7 @@ class _SliverNKToolbarContent extends StatefulWidget {
   final Color? tintColor;
   final Color? backgroundColor;
   final NKToolbarAppearance appearance;
+  final NKSearchBarConfig? searchBar;
 
   const _SliverNKToolbarContent({
     required this.shrinkOffset,
@@ -478,6 +552,7 @@ class _SliverNKToolbarContent extends StatefulWidget {
     this.tintColor,
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
+    this.searchBar,
   });
 
   @override
@@ -509,6 +584,20 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
             widget.trailingItems[index].onPressed?.call();
           }
         }
+      case 'onSearchChanged':
+        if (call.arguments is String) {
+          widget.searchBar?.onChanged?.call(call.arguments as String);
+        }
+      case 'onSearchSubmitted':
+        if (call.arguments is String) {
+          widget.searchBar?.onSubmitted?.call(call.arguments as String);
+        }
+      case 'onSearchCancelled':
+        widget.searchBar?.onCancelPressed?.call();
+      case 'onScopeChanged':
+        if (call.arguments is int) {
+          widget.searchBar?.onScopeChanged?.call(call.arguments as int);
+        }
     }
   }
 
@@ -533,7 +622,8 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
         oldWidget.trailingItems.length != widget.trailingItems.length ||
         (oldWidget.onBackPressed == null) !=
             (widget.onBackPressed == null) ||
-        (oldWidget.leadingItem == null) != (widget.leadingItem == null)) {
+        (oldWidget.leadingItem == null) != (widget.leadingItem == null) ||
+        (oldWidget.searchBar == null) != (widget.searchBar == null)) {
       _updateNative();
     }
   }
@@ -564,6 +654,7 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
       'appearance': widget.appearance.name,
       'showSeparator': false,
       'height': 44.0,
+      if (widget.searchBar != null) 'searchBar': widget.searchBar!.toMap(),
     };
   }
 

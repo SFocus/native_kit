@@ -39,6 +39,14 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKToolbar
       let toolbarFactory = NKToolbarViewFactory(registrar: registrar)
       registrar.register(toolbarFactory, withId: "native_kit/toolbar_view")
+
+      // NKProgressView
+      let progressFactory = NKProgressViewFactory(registrar: registrar)
+      registrar.register(progressFactory, withId: "native_kit/progress_view")
+
+      // NKDatePicker
+      let datePickerFactory = NKDatePickerViewFactory(registrar: registrar)
+      registrar.register(datePickerFactory, withId: "native_kit/date_picker_view")
     }
 
     if #available(iOS 26.0, *) {
@@ -56,6 +64,7 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
+
     default:
       result(FlutterMethodNotImplemented)
     }

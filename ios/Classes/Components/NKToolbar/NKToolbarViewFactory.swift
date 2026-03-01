@@ -37,6 +37,7 @@ final class NKToolbarPlatformView: NSObject, FlutterPlatformView {
     private let container: UIView
     private let navBar: UINavigationBar
     private let navItem: UINavigationItem
+    private var searchBar: UISearchBar?
 
     init(
         frame: CGRect,
@@ -138,6 +139,41 @@ final class NKToolbarPlatformView: NSObject, FlutterPlatformView {
         }
 
         navItem.rightBarButtonItems = trailingItems
+
+        // Search bar
+        configureSearchBar(params)
+    }
+
+    private func configureSearchBar(_ params: [String: Any]) {
+        guard let searchConfig = params["searchBar"] as? [String: Any] else {
+            // Remove search bar if config absent
+            if searchBar != nil {
+                navItem.titleView = nil
+                searchBar = nil
+            }
+            return
+        }
+
+        let sb: UISearchBar
+        if let existing = searchBar {
+            sb = existing
+        } else {
+            sb = UISearchBar()
+            sb.delegate = self
+            sb.searchBarStyle = .minimal
+            searchBar = sb
+            navItem.titleView = sb
+        }
+
+        sb.placeholder = searchConfig["placeholder"] as? String ?? "Search"
+
+        if let scopeTitles = searchConfig["scopeTitles"] as? [String], !scopeTitles.isEmpty {
+            sb.showsScopeBar = true
+            sb.scopeButtonTitles = scopeTitles
+        } else {
+            sb.showsScopeBar = false
+            sb.scopeButtonTitles = nil
+        }
     }
 
     private func configureAppearance(_ params: [String: Any]) {
@@ -242,5 +278,29 @@ final class NKToolbarPlatformView: NSObject, FlutterPlatformView {
         default:
             result(FlutterMethodNotImplemented)
         }
+    }
+}
+
+// MARK: - UISearchBarDelegate
+
+@available(iOS 18.0, *)
+extension NKToolbarPlatformView: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        channel.invokeMethod("onSearchChanged", arguments: searchText)
+    }
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        channel.invokeMethod("onSearchSubmitted", arguments: searchBar.text ?? "")
+        searchBar.resignFirstResponder()
+    }
+
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        channel.invokeMethod("onSearchCancelled", arguments: nil)
+        searchBar.text = ""
+        searchBar.resignFirstResponder()
+    }
+
+    func searchBar(_ searchBar: UISearchBar, selectedScopeButtonIndexDidChange selectedScope: Int) {
+        channel.invokeMethod("onScopeChanged", arguments: selectedScope)
     }
 }

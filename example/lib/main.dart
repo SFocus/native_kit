@@ -23,6 +23,7 @@ class _MyAppState extends State<MyApp> {
     ButtonDemoPage(),
     GlassDemoPage(),
     ToolbarDemoPage(),
+    PickerDemoPage(),
   ];
 
   @override
@@ -79,6 +80,11 @@ class _MyAppState extends State<MyApp> {
                 title: 'Toolbar',
                 icon: NKSFSymbol('menubar.rectangle'),
                 selectedIcon: NKSFSymbol('menubar.rectangle'),
+              ),
+              NKTabBarItem(
+                title: 'Pickers',
+                icon: NKSFSymbol('calendar'),
+                selectedIcon: NKSFSymbol('calendar'),
               ),
             ],
             currentIndex: _selectedIndex,
@@ -852,4 +858,130 @@ class _DetailScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Picker Demo Page — NKDatePicker, NKProgressView, NKSheet
+// ---------------------------------------------------------------------------
+
+class PickerDemoPage extends StatefulWidget {
+  const PickerDemoPage({super.key});
+
+  @override
+  State<PickerDemoPage> createState() => _PickerDemoPageState();
+}
+
+class _PickerDemoPageState extends State<PickerDemoPage> {
+  DateTime _selectedDate = DateTime.now();
+  double _progress = 0.3;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Text('Pickers & More',
+            style: Theme.of(context).textTheme.headlineMedium),
+        const SizedBox(height: 24),
+
+        // NKProgressView — bar
+        Text('NKProgressView (bar)',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        NKProgressView(
+          style: NKProgressViewStyle.bar,
+          value: _progress,
+          tintColor: Colors.blue,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text('Progress: ${(_progress * 100).round()}%'),
+            const Spacer(),
+            TextButton(
+              onPressed: () =>
+                  setState(() => _progress = (_progress + 0.1).clamp(0.0, 1.0)),
+              child: const Text('+10%'),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _progress = 0.0),
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // NKProgressView — spinner
+        Text('NKProgressView (spinner)',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Column(
+              children: [
+                NKProgressView(
+                  style: NKProgressViewStyle.spinner,
+                  spinnerSize: NKSpinnerSize.small,
+                ),
+                SizedBox(height: 4),
+                Text('Small'),
+              ],
+            ),
+            Column(
+              children: [
+                NKProgressView(
+                  style: NKProgressViewStyle.spinner,
+                  spinnerSize: NKSpinnerSize.medium,
+                ),
+                SizedBox(height: 4),
+                Text('Medium'),
+              ],
+            ),
+            Column(
+              children: [
+                NKProgressView(
+                  style: NKProgressViewStyle.spinner,
+                  spinnerSize: NKSpinnerSize.large,
+                  tintColor: Colors.orange,
+                ),
+                SizedBox(height: 4),
+                Text('Large'),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        // NKDatePicker — compact
+        Text('NKDatePicker (compact)',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        NKDatePicker(
+          mode: NKDatePickerMode.dateAndTime,
+          style: NKDatePickerStyle.compact,
+          initialDate: _selectedDate,
+          onDateChanged: (date) => setState(() => _selectedDate = date),
+        ),
+        const SizedBox(height: 8),
+        Text('Selected: ${_selectedDate.toString().split('.').first}'),
+        const SizedBox(height: 24),
+
+        // NKDatePicker — inline
+        Text('NKDatePicker (inline)',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        NKDatePicker(
+          mode: NKDatePickerMode.date,
+          style: NKDatePickerStyle.inline,
+          initialDate: _selectedDate,
+          onDateChanged: (date) => setState(() => _selectedDate = date),
+          tintColor: Colors.blue,
+        ),
+        const SizedBox(height: 32),
+
+      ],
+    );
+  }
+
 }
