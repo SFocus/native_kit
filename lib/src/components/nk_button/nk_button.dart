@@ -26,6 +26,22 @@ enum NKButtonStyle {
 
   /// A button with a filled background.
   filled,
+
+  /// A button with a translucent Liquid Glass style (iOS 26+).
+  /// Falls back to [bordered] on earlier iOS versions.
+  glass,
+
+  /// A button with a clear Liquid Glass style (iOS 26+).
+  /// Falls back to [plain] on earlier iOS versions.
+  clearGlass,
+
+  /// A button with a prominent Liquid Glass style tinted with the app's
+  /// tint color (iOS 26+). Falls back to [borderedProminent] on earlier iOS.
+  prominentGlass,
+
+  /// A button with a prominent, clear Liquid Glass style (iOS 26+).
+  /// Falls back to [filled] on earlier iOS versions.
+  prominentClearGlass,
 }
 
 /// A native iOS-style button widget.
@@ -164,19 +180,24 @@ class _NKButtonState extends State<NKButton>
 
   @override
   Widget build(BuildContext context) {
+    final isIconOnly = widget.label == null && widget.icon != null;
     return SizedBox(
       height: widget.height,
+      width: isIconOnly ? widget.height : null,
       child: NKPlatformBuilder(
         iosBuilder: (_) => UiKitView(
           viewType: 'native_kit/button_view',
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
+          gestureRecognizers: eagerGestureRecognizers,
         ),
         fallbackBuilder: (_) => CupertinoButton(
           onPressed: widget.enabled ? widget.onPressed : null,
           color: widget.style == NKButtonStyle.filled ||
-                  widget.style == NKButtonStyle.borderedProminent
+                  widget.style == NKButtonStyle.borderedProminent ||
+                  widget.style == NKButtonStyle.prominentGlass ||
+                  widget.style == NKButtonStyle.prominentClearGlass
               ? (widget.tintColor ?? CupertinoColors.activeBlue)
               : null,
           child: Row(

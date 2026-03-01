@@ -189,6 +189,26 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
             return .borderedProminent()
         case "filled":
             return .filled()
+        case "glass":
+            if #available(iOS 26.0, *) {
+                return .glass()
+            }
+            return .bordered()
+        case "clearGlass":
+            if #available(iOS 26.0, *) {
+                return .clearGlass()
+            }
+            return .plain()
+        case "prominentGlass":
+            if #available(iOS 26.0, *) {
+                return .prominentGlass()
+            }
+            return .borderedProminent()
+        case "prominentClearGlass":
+            if #available(iOS 26.0, *) {
+                return .prominentClearGlass()
+            }
+            return .filled()
         default:
             return .filled()
         }
