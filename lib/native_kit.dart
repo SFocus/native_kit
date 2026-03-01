@@ -11,6 +11,9 @@ export 'src/components/nk_tab_bar/nk_tab_bar_icon.dart';
 // NKSwitch
 export 'src/components/nk_switch/nk_switch.dart';
 
+// NKSlider
+export 'src/components/nk_slider/nk_slider.dart';
+
 class NativeKit {
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();
