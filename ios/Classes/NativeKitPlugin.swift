@@ -35,6 +35,20 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKPopupMenu
       let popupMenuFactory = NKPopupMenuViewFactory(registrar: registrar)
       registrar.register(popupMenuFactory, withId: "native_kit/popup_menu_view")
+
+      // NKToolbar
+      let toolbarFactory = NKToolbarViewFactory(registrar: registrar)
+      registrar.register(toolbarFactory, withId: "native_kit/toolbar_view")
+    }
+
+    if #available(iOS 26.0, *) {
+      // NKGlassContainer
+      let glassContainerFactory = NKGlassContainerViewFactory(registrar: registrar)
+      registrar.register(glassContainerFactory, withId: "native_kit/glass_container_view")
+
+      // NKGlassButtonGroup
+      let glassButtonGroupFactory = NKGlassButtonGroupViewFactory(registrar: registrar)
+      registrar.register(glassButtonGroupFactory, withId: "native_kit/glass_button_group_view")
     }
   }
 
