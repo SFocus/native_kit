@@ -19,7 +19,7 @@ Add to your `pubspec.yaml`:
 dependencies:
   native_kit:
     git:
-      url: https://github.com/nicourrrn/native_kit.git
+      url: https://github.com/SFocus/native_kit.git
 ```
 
 Then run:
