@@ -137,6 +137,7 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
+          gestureRecognizers: eagerGestureRecognizers,
         ),
         fallbackBuilder: (_) => CupertinoSlidingSegmentedControl<int>(
           groupValue: widget.selectedIndex,

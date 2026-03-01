@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -27,6 +29,14 @@ mixin NKPlatformViewMixin<T extends StatefulWidget> on State<T> {
 
   /// Override to handle incoming method calls from native.
   Future<void> handleMethodCall(MethodCall call);
+
+  /// Gesture recognizers that eagerly claim touches so native UIKit controls
+  /// receive proper press/drag feedback instead of Flutter intercepting them.
+  Set<Factory<OneSequenceGestureRecognizer>> get eagerGestureRecognizers => {
+        Factory<OneSequenceGestureRecognizer>(
+          () => EagerGestureRecognizer(),
+        ),
+      };
 
   @override
   void dispose() {

@@ -113,6 +113,7 @@ class _NKSwitchState extends State<NKSwitch>
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
+          gestureRecognizers: eagerGestureRecognizers,
         ),
         fallbackBuilder: (context) => CupertinoSwitch(
           value: widget.value,

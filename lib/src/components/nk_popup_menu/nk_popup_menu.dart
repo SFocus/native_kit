@@ -129,6 +129,7 @@ class _NKPopupMenuState extends State<NKPopupMenu>
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
+          gestureRecognizers: eagerGestureRecognizers,
         ),
         fallbackBuilder: (context) => _buildFallback(context),
       ),
