@@ -23,6 +23,10 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKButton
       let buttonFactory = NKButtonViewFactory(registrar: registrar)
       registrar.register(buttonFactory, withId: "native_kit/button_view")
+
+      // NKSegmentedControl
+      let segmentedControlFactory = NKSegmentedControlViewFactory(registrar: registrar)
+      registrar.register(segmentedControlFactory, withId: "native_kit/segmented_control_view")
     }
   }
 
