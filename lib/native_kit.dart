@@ -1,8 +1,9 @@
-library native_kit;
-
 import 'native_kit_platform_interface.dart';
 
-// NKTabBar component exports
+// Shared models
+export 'src/models/nk_sf_symbol.dart';
+
+// NKTabBar
 export 'src/components/nk_tab_bar/nk_tab_bar.dart';
 export 'src/components/nk_tab_bar/nk_tab_bar_item.dart';
 export 'src/components/nk_tab_bar/nk_tab_bar_icon.dart';

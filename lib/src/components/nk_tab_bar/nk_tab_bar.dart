@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../utilities/nk_platform_view_mixin.dart';
 import 'nk_tab_bar_item.dart';
 
 /// A native iOS-style bottom tab bar widget.
 ///
-/// Uses UIKit's UITabBarController on iOS for authentic native look and feel.
+/// Uses UIKit's UITabBar on iOS for authentic native look and feel.
 /// Part of the NativeKit library (NK prefix indicates NativeKit components).
 ///
 /// Example:
@@ -44,7 +45,7 @@ class NKTabBar extends StatefulWidget {
   /// Callback when a custom button is tapped.
   final ValueChanged<int>? onCustomButtonTap;
 
-  /// Background color of the tab bar (ARGB format).
+  /// Background color of the tab bar.
   final Color? backgroundColor;
 
   /// Color of the selected item.
@@ -72,20 +73,13 @@ class NKTabBar extends StatefulWidget {
   State<NKTabBar> createState() => _NKTabBarState();
 }
 
-class _NKTabBarState extends State<NKTabBar> {
-  static const MethodChannel _channel = MethodChannel('native_kit/tab_bar');
+class _NKTabBarState extends State<NKTabBar>
+    with NKPlatformViewMixin<NKTabBar> {
+  @override
+  String get channelPrefix => 'native_kit/tab_bar';
 
   @override
-  void initState() {
-    super.initState();
-    _setupMethodCallHandler();
-  }
-
-  void _setupMethodCallHandler() {
-    _channel.setMethodCallHandler(_handleMethodCall);
-  }
-
-  Future<void> _handleMethodCall(MethodCall call) async {
+  Future<void> handleMethodCall(MethodCall call) async {
     if (call.method == 'onTabSelected' && call.arguments is int) {
       widget.onTap?.call(call.arguments as int);
     } else if (call.method == 'onCustomButtonTap' && call.arguments is int) {
@@ -100,18 +94,20 @@ class _NKTabBarState extends State<NKTabBar> {
     }
 
     // Validate that only one custom button exists
-    final customButtonCount = widget.items.where((item) => item.isCustomButton).length;
+    final customButtonCount =
+        widget.items.where((item) => item.isCustomButton).length;
     assert(
       customButtonCount <= 1,
       'Only one custom button is allowed in NKTabBar. Found $customButtonCount custom buttons.',
     );
 
     return SizedBox(
-      height: widget.height ?? 49.0 + MediaQuery.of(context).padding.bottom,
+      height: (widget.height ?? 49.0) + MediaQuery.of(context).padding.bottom,
       child: UiKitView(
         viewType: 'native_kit/tab_bar_view',
         creationParams: _buildCreationParams(),
         creationParamsCodec: const StandardMessageCodec(),
+        onPlatformViewCreated: onPlatformViewCreated,
       ),
     );
   }
@@ -121,11 +117,11 @@ class _NKTabBarState extends State<NKTabBar> {
       'items': widget.items.map((item) => item.toMap()).toList(),
       'currentIndex': widget.currentIndex,
       if (widget.backgroundColor != null)
-        'backgroundColor': widget.backgroundColor!.value,
+        'backgroundColor': widget.backgroundColor!.toARGB32(),
       if (widget.selectedItemColor != null)
-        'selectedItemColor': widget.selectedItemColor!.value,
+        'selectedItemColor': widget.selectedItemColor!.toARGB32(),
       if (widget.unselectedItemColor != null)
-        'unselectedItemColor': widget.unselectedItemColor!.value,
+        'unselectedItemColor': widget.unselectedItemColor!.toARGB32(),
     };
   }
 
@@ -151,7 +147,7 @@ class _NKTabBarState extends State<NKTabBar> {
 
   Future<void> _updateSelectedIndex(int index) async {
     try {
-      await _channel.invokeMethod('setSelectedIndex', {'index': index});
+      await channel?.invokeMethod('setSelectedIndex', {'index': index});
     } catch (e) {
       debugPrint('Failed to update selected index: $e');
     }
@@ -159,7 +155,10 @@ class _NKTabBarState extends State<NKTabBar> {
 
   Future<void> _updateBadge(int index, String? badge) async {
     try {
-      await _channel.invokeMethod('setBadge', {'index': index, 'badge': badge});
+      await channel?.invokeMethod(
+        'setBadge',
+        {'index': index, 'badge': badge},
+      );
     } catch (e) {
       debugPrint('Failed to update badge: $e');
     }
