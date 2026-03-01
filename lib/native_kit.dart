@@ -23,6 +23,10 @@ export 'src/components/nk_segmented_control/nk_segmented_control.dart';
 // NKIcon
 export 'src/components/nk_icon/nk_icon.dart';
 
+// NKPopupMenu
+export 'src/components/nk_popup_menu/nk_popup_menu.dart';
+export 'src/components/nk_popup_menu/nk_popup_menu_item.dart';
+
 class NativeKit {
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();

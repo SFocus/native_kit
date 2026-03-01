@@ -31,6 +31,10 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
       // NKIcon
       let iconFactory = NKIconViewFactory(registrar: registrar)
       registrar.register(iconFactory, withId: "native_kit/icon_view")
+
+      // NKPopupMenu
+      let popupMenuFactory = NKPopupMenuViewFactory(registrar: registrar)
+      registrar.register(popupMenuFactory, withId: "native_kit/popup_menu_view")
     }
   }
 
