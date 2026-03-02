@@ -54,6 +54,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             binaryMessenger: registrar.messenger()
         )
         self.container = UIView(frame: frame)
+        self.container.backgroundColor = .clear
         super.init()
 
         channel.setMethodCallHandler { [weak self] call, result in
@@ -108,9 +109,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         // On iOS 26+, skip custom appearance to let Liquid Glass apply automatically.
         // Only set explicit colors if provided.
         if #available(iOS 26.0, *) {
+            // Use default background appearance — on iOS 26 this gives liquid glass
+            let appearance = UITabBarAppearance()
+            appearance.configureWithDefaultBackground()
+
             if let bgColor {
-                tabBar.backgroundColor = bgColor
+                appearance.backgroundColor = bgColor
             }
+
             if let selectedColor = selectedItemColor {
                 tabBar.tintColor = selectedColor
             }
@@ -118,13 +124,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
                 tabBar.unselectedItemTintColor = unselectedColor
             }
 
-            // Apply text style via appearance on iOS 26+
+            // Apply text style
             if let font = NKFontUtils.font(from: textStyleDict, defaultSize: 10.0) {
-                let appearance = tabBar.standardAppearance
                 appearance.stackedLayoutAppearance.normal.titleTextAttributes[.font] = font
                 appearance.stackedLayoutAppearance.selected.titleTextAttributes[.font] = font
-                tabBar.standardAppearance = appearance
             }
+
+            tabBar.standardAppearance = appearance
+            tabBar.scrollEdgeAppearance = appearance
             return
         }
 

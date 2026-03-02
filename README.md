@@ -22,6 +22,16 @@ dependencies:
       url: https://github.com/SFocus/native_kit.git
 ```
 
+To pin a specific version:
+
+```yaml
+dependencies:
+  native_kit:
+    git:
+      url: https://github.com/SFocus/native_kit.git
+      ref: v1.1.0
+```
+
 Then run:
 ```bash
 flutter pub get
