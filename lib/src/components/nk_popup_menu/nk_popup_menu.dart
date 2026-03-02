@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 import 'nk_popup_menu_item.dart';
@@ -35,8 +35,8 @@ class NKPopupMenu extends StatefulWidget {
   /// Optional text label displayed on the button.
   final String? buttonLabel;
 
-  /// Optional SF Symbol icon displayed on the button.
-  final NKSFSymbol? buttonIcon;
+  /// Optional icon displayed on the button (SF Symbol or custom image).
+  final NKImageSource? buttonIcon;
 
   /// The list of menu items (and optional dividers) to display.
   final List<NKPopupMenuItem> items;

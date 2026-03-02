@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../models/nk_text_style.dart';
 import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
@@ -12,8 +12,8 @@ class NKToolbarItem {
   /// Optional text label.
   final String? label;
 
-  /// Optional SF Symbol icon.
-  final NKSFSymbol? icon;
+  /// Optional icon (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// Called when the item is tapped.
   final VoidCallback? onPressed;

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 
 /// Represents a single item in the NKTabBar.
 class NKTabBarItem {
   /// The title text displayed below the icon.
   final String title;
 
-  /// The icon to display (SF Symbol).
-  final NKSFSymbol? icon;
+  /// The icon to display (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// Optional selected state icon (used when tab is active).
-  final NKSFSymbol? selectedIcon;
+  final NKImageSource? selectedIcon;
 
   /// Optional badge text to display on the item.
   final String? badge;
@@ -35,7 +35,7 @@ class NKTabBarItem {
   /// Note: Custom buttons remain in the unselected state and don't change
   /// appearance when tapped. They trigger an action without switching tabs.
   const NKTabBarItem.customButton({
-    required NKSFSymbol this.icon,
+    required NKImageSource this.icon,
     String? title,
   }) : title = title ?? '',
        selectedIcon = null,
@@ -58,8 +58,8 @@ class NKTabBarItem {
   /// Creates a copy of this item with updated fields.
   NKTabBarItem copyWith({
     String? title,
-    NKSFSymbol? icon,
-    NKSFSymbol? selectedIcon,
+    NKImageSource? icon,
+    NKImageSource? selectedIcon,
     String? badge,
     Color? customColor,
     bool? isCustomButton,

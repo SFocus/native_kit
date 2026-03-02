@@ -228,11 +228,7 @@ final class NKToolbarPlatformView: NSObject, FlutterPlatformView {
         let barItem: UIBarButtonItem
 
         if let iconDict = data["icon"] as? [String: Any],
-           let parsed = NKSymbolUtils.parseIcon(from: iconDict) {
-            let image = NKSymbolUtils.createImage(
-                name: parsed.name,
-                config: parsed.config
-            )
+           let image = NKSymbolUtils.createImageFromSource(iconDict) {
             barItem = UIBarButtonItem(
                 image: image,
                 style: .plain,

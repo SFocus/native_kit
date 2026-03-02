@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
@@ -12,8 +12,8 @@ class NKGlassButton {
   /// The text label displayed on the button.
   final String? label;
 
-  /// An optional SF Symbol icon displayed on the button.
-  final NKSFSymbol? icon;
+  /// An optional icon displayed on the button (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// Callback invoked when the button is pressed.
   final VoidCallback? onPressed;

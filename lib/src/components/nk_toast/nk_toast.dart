@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 
 import '../../models/nk_glass_style.dart';
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../nk_glass_container/nk_glass_container.dart';
 import '../nk_icon/nk_icon.dart';
 
@@ -48,7 +48,7 @@ class NKToast {
   static VoidCallback show(
     BuildContext context, {
     required String message,
-    NKSFSymbol? icon,
+    NKImageSource? icon,
     NKGlassStyle style = NKGlassStyle.regular,
     Color? tintColor,
     Duration duration = const Duration(seconds: 3),
@@ -93,7 +93,7 @@ class NKToast {
 
 class _NKToastOverlay extends StatefulWidget {
   final String message;
-  final NKSFSymbol? icon;
+  final NKImageSource? icon;
   final NKGlassStyle style;
   final Color? tintColor;
   final Duration duration;
@@ -212,7 +212,7 @@ class _NKToastOverlayState extends State<_NKToastOverlay>
                   children: [
                     if (widget.icon != null) ...[
                       NKIcon(
-                        symbol: widget.icon!,
+                        source: widget.icon!,
                         size: 20,
                         color: widget.tintColor,
                       ),

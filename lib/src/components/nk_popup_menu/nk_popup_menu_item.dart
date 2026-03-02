@@ -1,4 +1,4 @@
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 
 /// Represents a single item in an [NKPopupMenu].
 ///
@@ -17,8 +17,8 @@ class NKPopupMenuItem {
   /// The text label displayed for this menu item.
   final String label;
 
-  /// Optional SF Symbol icon displayed alongside the label.
-  final NKSFSymbol? icon;
+  /// Optional icon displayed alongside the label (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// Whether the item shows a checkmark.
   final bool isChecked;

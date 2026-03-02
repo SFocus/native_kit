@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../models/nk_text_style.dart';
 import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
@@ -74,8 +74,8 @@ class NKButton extends StatefulWidget {
   /// The text label displayed on the button.
   final String? label;
 
-  /// An optional SF Symbol icon displayed alongside the label.
-  final NKSFSymbol? icon;
+  /// An optional icon displayed alongside the label (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// The visual style of the button.
   final NKButtonStyle style;
@@ -114,7 +114,7 @@ class NKButton extends StatefulWidget {
   /// Creates an icon-only button with no label.
   const NKButton.icon({
     super.key,
-    required NKSFSymbol this.icon,
+    required NKImageSource this.icon,
     this.style = NKButtonStyle.filled,
     this.onPressed,
     this.tintColor,

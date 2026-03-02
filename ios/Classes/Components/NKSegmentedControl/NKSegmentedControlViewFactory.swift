@@ -81,8 +81,7 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
             if let iconsData = iconsData,
                index < iconsData.count,
                let iconDict = iconsData[index] as? [String: Any],
-               let parsed = NKSymbolUtils.parseIcon(from: iconDict),
-               let image = NKSymbolUtils.createImage(name: parsed.name, config: parsed.config) {
+               let image = NKSymbolUtils.createImageFromSource(iconDict) {
                 segmentedControl.setImage(image.withRenderingMode(.alwaysTemplate), forSegmentAt: index)
             }
         }

@@ -174,13 +174,8 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private func createTabBarItem(from data: TabItemData, at index: Int) -> UITabBarItem {
         let item: UITabBarItem
 
-        let image: UIImage? = data.iconName.flatMap { name in
-            NKSymbolUtils.createImage(name: name, config: data.iconConfig)
-        }
-
-        let selectedImage: UIImage? = data.selectedIconName.flatMap { name in
-            NKSymbolUtils.createImage(name: name, config: data.selectedIconConfig)
-        }
+        let image = NKSymbolUtils.createImageFromSource(data.iconDict)
+        let selectedImage = NKSymbolUtils.createImageFromSource(data.selectedIconDict)
 
         if data.isCustomButton {
             item = UITabBarItem(tabBarSystemItem: .search, tag: index)
@@ -286,10 +281,8 @@ extension NKTabBarPlatformView: UITabBarDelegate {
 @available(iOS 18.0, *)
 struct TabItemData {
     let title: String
-    let iconName: String?
-    let iconConfig: [String: Any]?
-    let selectedIconName: String?
-    let selectedIconConfig: [String: Any]?
+    let iconDict: [String: Any]?
+    let selectedIconDict: [String: Any]?
     var badge: String?
     let isCustomButton: Bool
 
@@ -297,21 +290,7 @@ struct TabItemData {
         self.title = dict["title"] as? String ?? ""
         self.badge = dict["badge"] as? String
         self.isCustomButton = dict["isCustomButton"] as? Bool ?? false
-
-        if let parsed = NKSymbolUtils.parseIcon(from: dict["icon"] as? [String: Any]) {
-            self.iconName = parsed.name
-            self.iconConfig = parsed.config
-        } else {
-            self.iconName = nil
-            self.iconConfig = nil
-        }
-
-        if let parsed = NKSymbolUtils.parseIcon(from: dict["selectedIcon"] as? [String: Any]) {
-            self.selectedIconName = parsed.name
-            self.selectedIconConfig = parsed.config
-        } else {
-            self.selectedIconName = nil
-            self.selectedIconConfig = nil
-        }
+        self.iconDict = dict["icon"] as? [String: Any]
+        self.selectedIconDict = dict["selectedIcon"] as? [String: Any]
     }
 }

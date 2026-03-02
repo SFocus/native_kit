@@ -1,4 +1,4 @@
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 
 /// Style of the slider track (iOS 26+).
 enum NKSliderTrackStyle {
@@ -17,8 +17,8 @@ class NKSliderTick {
   /// An optional label displayed at the tick mark.
   final String? title;
 
-  /// An optional SF Symbol icon displayed at the tick mark.
-  final NKSFSymbol? icon;
+  /// An optional icon displayed at the tick mark (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   const NKSliderTick({required this.position, this.title, this.icon});
 

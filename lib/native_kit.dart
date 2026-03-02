@@ -1,6 +1,7 @@
 import 'native_kit_platform_interface.dart';
 
 // Shared models
+export 'src/models/nk_image_source.dart';
 export 'src/models/nk_sf_symbol.dart';
 export 'src/models/nk_glass_style.dart';
 export 'src/models/nk_text_style.dart';

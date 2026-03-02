@@ -125,8 +125,8 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
                 var tick = UISlider.TrackConfiguration.Tick(position: position)
                 tick.title = data["title"] as? String
                 if let iconDict = data["icon"] as? [String: Any],
-                   let parsed = NKSymbolUtils.parseIcon(from: iconDict) {
-                    tick.image = NKSymbolUtils.createImage(name: parsed.name, config: parsed.config)
+                   let image = NKSymbolUtils.createImageFromSource(iconDict) {
+                    tick.image = image
                 }
                 return tick
             }

@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../models/nk_text_style.dart';
 import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
@@ -34,11 +34,11 @@ class NKSegmentedControl extends StatefulWidget {
   /// The labels for each segment.
   final List<String> labels;
 
-  /// Optional SF Symbol icons for each segment.
+  /// Optional icons for each segment (SF Symbols or custom images).
   ///
   /// If provided, must have the same length as [labels]. Use `null` entries
   /// for segments that should not have an icon.
-  final List<NKSFSymbol?>? icons;
+  final List<NKImageSource?>? icons;
 
   /// The currently selected segment index.
   final int selectedIndex;
