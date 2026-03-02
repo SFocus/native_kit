@@ -204,6 +204,16 @@ final class NKToolbarPlatformView: NSObject, FlutterPlatformView {
             appearance.shadowImage = UIImage()
         }
 
+        // Apply title text style
+        if let textStyleDict = params["titleTextStyle"] as? [String: Any] {
+            if let font = NKFontUtils.font(from: textStyleDict, defaultSize: 17.0) {
+                appearance.titleTextAttributes[.font] = font
+            }
+            if let largeTitleFont = NKFontUtils.font(from: textStyleDict, defaultSize: 34.0) {
+                appearance.largeTitleTextAttributes[.font] = largeTitleFont
+            }
+        }
+
         navBar.standardAppearance = appearance
         navBar.scrollEdgeAppearance = appearance
         navBar.compactAppearance = appearance

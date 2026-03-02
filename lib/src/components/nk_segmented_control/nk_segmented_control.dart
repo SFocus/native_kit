@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_text_style.dart';
+import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
@@ -53,6 +55,12 @@ class NKSegmentedControl extends StatefulWidget {
   /// The height of the segmented control.
   final double height;
 
+  /// Text style for segment labels (font family, size, weight).
+  final NKTextStyle? textStyle;
+
+  /// Corner radius of the segmented control.
+  final double? cornerRadius;
+
   const NKSegmentedControl({
     super.key,
     required this.labels,
@@ -62,6 +70,8 @@ class NKSegmentedControl extends StatefulWidget {
     this.tintColor,
     this.enabled = true,
     this.height = 32.0,
+    this.textStyle,
+    this.cornerRadius,
   }) : assert(
           icons == null || icons.length == labels.length,
           'icons list must have the same length as labels',
@@ -93,6 +103,10 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
     if (oldWidget.enabled != widget.enabled) {
       _setEnabled(widget.enabled);
     }
+    if (oldWidget.textStyle != widget.textStyle ||
+        oldWidget.cornerRadius != widget.cornerRadius) {
+      _updateStyling();
+    }
   }
 
   Future<void> _setSelectedIndex(int index) async {
@@ -111,20 +125,38 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
     }
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Future<void> _updateStyling() async {
+    try {
+      await channel?.invokeMethod('updateStyling', {
+        if (widget.textStyle != null) 'textStyle': widget.textStyle!.toMap(),
+        if (widget.cornerRadius != null) 'cornerRadius': widget.cornerRadius,
+      });
+    } catch (e) {
+      debugPrint('NKSegmentedControl: Failed to update styling: $e');
+    }
+  }
+
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveTextStyle = widget.textStyle ?? theme?.textStyle;
+    final effectiveCornerRadius = widget.cornerRadius ?? theme?.cornerRadius;
+    final effectiveTintColor = widget.tintColor ?? theme?.tintColor;
+
     return {
       'labels': widget.labels,
       if (widget.icons != null)
         'icons': widget.icons!.map((icon) => icon?.toMap()).toList(),
       'selectedIndex': widget.selectedIndex,
       'enabled': widget.enabled,
-      if (widget.tintColor != null)
-        'tintColor': widget.tintColor!.toARGB32(),
+      if (effectiveTintColor != null)
+        'tintColor': effectiveTintColor.toARGB32(),
+      if (effectiveTextStyle != null) 'textStyle': effectiveTextStyle.toMap(),
+      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = NKTheme.of(context);
     if (widget.labels.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -134,7 +166,7 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
       child: NKPlatformBuilder(
         iosBuilder: (_) => UiKitView(
           viewType: 'native_kit/segmented_control_view',
-          creationParams: _buildCreationParams(),
+          creationParams: _buildCreationParams(theme),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
           gestureRecognizers: eagerGestureRecognizers,

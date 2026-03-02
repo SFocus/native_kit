@@ -100,6 +100,9 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
             segmentedControl.selectedSegmentTintColor = UIColor.fromARGB(colorValue)
         }
 
+        // Apply text style
+        applyStyling(arguments)
+
         // Add target for value changes
         segmentedControl.addTarget(self, action: #selector(valueChanged), for: .valueChanged)
 
@@ -110,6 +113,20 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
             segmentedControl.topAnchor.constraint(equalTo: container.topAnchor),
             segmentedControl.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
+    }
+
+    private func applyStyling(_ params: [String: Any]) {
+        if let textStyleDict = params["textStyle"] as? [String: Any],
+           let font = NKFontUtils.font(from: textStyleDict, defaultSize: 13.0) {
+            let attrs: [NSAttributedString.Key: Any] = [.font: font]
+            segmentedControl.setTitleTextAttributes(attrs, for: .normal)
+            segmentedControl.setTitleTextAttributes(attrs, for: .selected)
+        }
+
+        if let cornerRadius = params["cornerRadius"] as? CGFloat {
+            segmentedControl.layer.cornerRadius = cornerRadius
+            segmentedControl.clipsToBounds = true
+        }
     }
 
     // MARK: - Segment Action
@@ -143,6 +160,10 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
                 return
             }
             segmentedControl.isEnabled = enabled
+            result(nil)
+
+        case "updateStyling":
+            applyStyling(args)
             result(nil)
 
         default:

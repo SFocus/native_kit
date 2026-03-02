@@ -41,6 +41,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private var bgColor: UIColor?
     private var selectedItemColor: UIColor?
     private var unselectedItemColor: UIColor?
+    private var textStyleDict: [String: Any]?
 
     init(
         frame: CGRect,
@@ -81,6 +82,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         if let color = arguments["unselectedItemColor"] as? Int64 {
             self.unselectedItemColor = UIColor.fromARGB(color)
         }
+        self.textStyleDict = arguments["textStyle"] as? [String: Any]
     }
 
     private func setupTabBar() {
@@ -115,6 +117,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             if let unselectedColor = unselectedItemColor {
                 tabBar.unselectedItemTintColor = unselectedColor
             }
+
+            // Apply text style via appearance on iOS 26+
+            if let font = NKFontUtils.font(from: textStyleDict, defaultSize: 10.0) {
+                let appearance = tabBar.standardAppearance
+                appearance.stackedLayoutAppearance.normal.titleTextAttributes[.font] = font
+                appearance.stackedLayoutAppearance.selected.titleTextAttributes[.font] = font
+                tabBar.standardAppearance = appearance
+            }
             return
         }
 
@@ -125,20 +135,27 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             appearance.backgroundColor = bgColor
         }
 
+        // Build font from text style
+        let font = NKFontUtils.font(from: textStyleDict, defaultSize: 10.0)
+
         if let selectedColor = selectedItemColor {
-            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
-                .foregroundColor: selectedColor
-            ]
+            var attrs: [NSAttributedString.Key: Any] = [.foregroundColor: selectedColor]
+            if let font { attrs[.font] = font }
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = attrs
             appearance.stackedLayoutAppearance.selected.iconColor = selectedColor
             tabBar.tintColor = selectedColor
+        } else if let font {
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.font: font]
         }
 
         if let unselectedColor = unselectedItemColor {
-            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
-                .foregroundColor: unselectedColor
-            ]
+            var attrs: [NSAttributedString.Key: Any] = [.foregroundColor: unselectedColor]
+            if let font { attrs[.font] = font }
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = attrs
             appearance.stackedLayoutAppearance.normal.iconColor = unselectedColor
             tabBar.unselectedItemTintColor = unselectedColor
+        } else if let font {
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.font: font]
         }
 
         tabBar.standardAppearance = appearance

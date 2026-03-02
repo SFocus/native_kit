@@ -38,6 +38,8 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     private var button: UIButton!
     private var currentStyle: String = "filled"
     private var tintColor: UIColor?
+    private var textStyleDict: [String: Any]?
+    private var cornerRadius: CGFloat?
 
     init(
         frame: CGRect,
@@ -96,6 +98,16 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
 
         if let tintColor = self.tintColor {
             configuration.baseForegroundColor = tintColor
+        }
+
+        // Text style
+        self.textStyleDict = arguments["textStyle"] as? [String: Any]
+        applyTextStyle(to: &configuration)
+
+        // Corner radius
+        self.cornerRadius = arguments["cornerRadius"] as? CGFloat
+        if let cornerRadius = self.cornerRadius {
+            configuration.background.cornerRadius = cornerRadius
         }
 
         button = UIButton(configuration: configuration)
@@ -165,7 +177,27 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
                 newConfig.baseForegroundColor = tintColor
             }
 
+            applyTextStyle(to: &newConfig)
+            if let cornerRadius = self.cornerRadius {
+                newConfig.background.cornerRadius = cornerRadius
+            }
+
             button.configuration = newConfig
+            result(nil)
+
+        case "updateStyling":
+            self.textStyleDict = args["textStyle"] as? [String: Any]
+            if let cr = args["cornerRadius"] as? CGFloat {
+                self.cornerRadius = cr
+            }
+
+            if var config = button.configuration {
+                applyTextStyle(to: &config)
+                if let cornerRadius = self.cornerRadius {
+                    config.background.cornerRadius = cornerRadius
+                }
+                button.configuration = config
+            }
             result(nil)
 
         default:
@@ -174,6 +206,16 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     }
 
     // MARK: - Helpers
+
+    private func applyTextStyle(to configuration: inout UIButton.Configuration) {
+        if let font = NKFontUtils.font(from: textStyleDict) {
+            configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = font
+                return outgoing
+            }
+        }
+    }
 
     private static func makeConfiguration(for styleName: String) -> UIButton.Configuration {
         switch styleName {

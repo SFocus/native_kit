@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
+import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
@@ -67,6 +68,9 @@ class NKProgressView extends StatefulWidget {
   /// Size of the spinner (spinner only).
   final NKSpinnerSize spinnerSize;
 
+  /// Corner radius of the progress bar (bar only).
+  final double? cornerRadius;
+
   const NKProgressView({
     super.key,
     this.style = NKProgressViewStyle.bar,
@@ -74,6 +78,7 @@ class NKProgressView extends StatefulWidget {
     this.tintColor,
     this.trackColor,
     this.spinnerSize = NKSpinnerSize.medium,
+    this.cornerRadius,
   });
 
   @override
@@ -95,27 +100,34 @@ class _NKProgressViewState extends State<NKProgressView>
         oldWidget.value != widget.value ||
         oldWidget.tintColor != widget.tintColor ||
         oldWidget.trackColor != widget.trackColor ||
-        oldWidget.spinnerSize != widget.spinnerSize) {
+        oldWidget.spinnerSize != widget.spinnerSize ||
+        oldWidget.cornerRadius != widget.cornerRadius) {
       _update();
     }
   }
 
   Future<void> _update() async {
     try {
-      await channel?.invokeMethod('update', _buildCreationParams());
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
     } catch (e) {
       debugPrint('NKProgressView: Failed to update: $e');
     }
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveCornerRadius = widget.cornerRadius ?? theme?.cornerRadius;
+    final effectiveTintColor = widget.tintColor ?? theme?.tintColor;
+
     return {
       'style': widget.style.name,
       if (widget.value != null) 'value': widget.value,
-      if (widget.tintColor != null) 'tintColor': widget.tintColor!.toARGB32(),
+      if (effectiveTintColor != null)
+        'tintColor': effectiveTintColor.toARGB32(),
       if (widget.trackColor != null)
         'trackColor': widget.trackColor!.toARGB32(),
       'spinnerSize': widget.spinnerSize.name,
+      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
     };
   }
 
@@ -133,13 +145,14 @@ class _NKProgressViewState extends State<NKProgressView>
 
   @override
   Widget build(BuildContext context) {
+    final theme = NKTheme.of(context);
     final isSpinner = widget.style == NKProgressViewStyle.spinner;
     final size = _height;
 
     Widget child = NKPlatformBuilder(
       iosBuilder: (_) => UiKitView(
         viewType: 'native_kit/progress_view',
-        creationParams: _buildCreationParams(),
+        creationParams: _buildCreationParams(theme),
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: onPlatformViewCreated,
       ),
