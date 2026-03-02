@@ -218,7 +218,10 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     /// Called by the container view when it returns to a window after navigation.
     func reapplyAppearance() {
         guard let tabBar = self.tabBar else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         configureAppearance(tabBar)
+        CATransaction.commit()
     }
 
     func setSelectedIndex(_ index: Int) {
