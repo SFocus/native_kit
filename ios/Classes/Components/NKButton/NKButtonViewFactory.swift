@@ -61,6 +61,11 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
         }
 
         configure(with: args)
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -234,6 +239,12 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
                 applyTextStyle(to: &config)
                 applyCornerRadius(to: &config, style: currentStyle)
                 button.configuration = config
+            }
+            result(nil)
+
+        case "setBrightness":
+            if let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
             }
             result(nil)
 

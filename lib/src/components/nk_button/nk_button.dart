@@ -179,7 +179,7 @@ class _NKButtonState extends State<NKButton>
         'tintColor': effectiveTintColor.toARGB32(),
       'height': widget.height,
       if (effectiveTextStyle != null) 'textStyle': effectiveTextStyle.toMap(),
-      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
+      'cornerRadius': ?effectiveCornerRadius,
     };
   }
 

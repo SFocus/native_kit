@@ -127,9 +127,12 @@ class _NKTabBarState extends State<NKTabBar>
   Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
     final effectiveTextStyle = widget.textStyle ?? theme?.textStyle;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return {
       'items': widget.items.map((item) => item.toMap()).toList(),
       'currentIndex': widget.currentIndex,
+      'isDark': isDark,
       if (widget.backgroundColor != null)
         'backgroundColor': widget.backgroundColor!.toARGB32(),
       if (widget.selectedItemColor != null)

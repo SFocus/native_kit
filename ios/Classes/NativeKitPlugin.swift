@@ -68,6 +68,21 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
 
+    case "setUserInterfaceStyle":
+      guard let args = call.arguments as? [String: Any],
+            let isDark = args["isDark"] as? Bool else {
+        result(nil)
+        return
+      }
+      let style: UIUserInterfaceStyle = isDark ? .dark : .light
+      if let window = UIApplication.shared.connectedScenes
+          .compactMap({ $0 as? UIWindowScene })
+          .flatMap({ $0.windows })
+          .first(where: { $0.isKeyWindow }) {
+        window.overrideUserInterfaceStyle = style
+      }
+      result(nil)
+
     case "registerFont":
       guard let args = call.arguments as? [String: Any],
             let assetPath = args["assetPath"] as? String,

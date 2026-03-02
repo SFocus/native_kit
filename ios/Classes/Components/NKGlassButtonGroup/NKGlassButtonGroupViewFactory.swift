@@ -56,6 +56,11 @@ final class NKGlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
         }
 
         configure(with: args)
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -149,6 +154,13 @@ final class NKGlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
 
             let buttons = args["buttons"] as? [[String: Any]] ?? []
             buildButtons(from: buttons)
+            result(nil)
+
+        case "setBrightness":
+            if let args = call.arguments as? [String: Any],
+               let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
             result(nil)
 
         default:

@@ -57,6 +57,11 @@ final class NKPopupMenuPlatformView: NSObject, FlutterPlatformView {
 
         setupButton()
         configure(with: args)
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -175,6 +180,8 @@ final class NKPopupMenuPlatformView: NSObject, FlutterPlatformView {
         return action
     }
 
+    // MARK: - Method Channel Handler
+
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "update":
@@ -183,6 +190,13 @@ final class NKPopupMenuPlatformView: NSObject, FlutterPlatformView {
                 return
             }
             applyParams(args)
+            result(nil)
+
+        case "setBrightness":
+            if let args = call.arguments as? [String: Any],
+               let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
             result(nil)
 
         default:

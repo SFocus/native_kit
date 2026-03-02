@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import 'native_kit_platform_interface.dart';
 
 // Shared models
@@ -57,7 +59,22 @@ export 'src/components/nk_progress_view/nk_progress_view.dart';
 export 'src/components/nk_date_picker/nk_date_picker.dart';
 
 class NativeKit {
+  static const MethodChannel _channel = MethodChannel('native_kit');
+
   Future<String?> getPlatformVersion() {
     return NativeKitPlatform.instance.getPlatformVersion();
+  }
+
+  /// Sets the iOS window's `overrideUserInterfaceStyle` to match your app's
+  /// theme. Call this whenever your app's brightness changes to prevent native
+  /// platform views from flashing the wrong theme during navigation transitions.
+  ///
+  /// ```dart
+  /// NativeKit.setUserInterfaceStyle(Brightness.dark);
+  /// ```
+  static Future<void> setUserInterfaceStyle(Brightness brightness) {
+    return _channel.invokeMethod('setUserInterfaceStyle', {
+      'isDark': brightness == Brightness.dark,
+    });
   }
 }

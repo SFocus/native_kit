@@ -154,7 +154,7 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
       if (effectiveTintColor != null)
         'tintColor': effectiveTintColor.toARGB32(),
       if (effectiveTextStyle != null) 'textStyle': effectiveTextStyle.toMap(),
-      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
+      'cornerRadius': ?effectiveCornerRadius,
     };
   }
 

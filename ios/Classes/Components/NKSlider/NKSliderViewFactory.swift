@@ -58,6 +58,11 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
 
         configure(with: args)
         setupSlider()
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -179,6 +184,8 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         channel.invokeMethod("onChangeEnd", arguments: Double(snapped))
     }
 
+    // MARK: - Method Channel Handler
+
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let args = call.arguments as? [String: Any] else {
             result(FlutterError(code: "INVALID_ARGS", message: "Expected dictionary", details: nil))
@@ -223,6 +230,12 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         case "setTrackConfiguration":
             if #available(iOS 26.0, *) {
                 configureTrack(from: args)
+            }
+            result(nil)
+
+        case "setBrightness":
+            if let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
             }
             result(nil)
 

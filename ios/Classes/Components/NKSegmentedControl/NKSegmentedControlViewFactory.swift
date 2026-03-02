@@ -55,6 +55,11 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         }
 
         configure(with: args)
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -195,6 +200,12 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
 
         case "updateStyling":
             applyStyling(args)
+            result(nil)
+
+        case "setBrightness":
+            if let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
             result(nil)
 
         default:

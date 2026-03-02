@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart' show Brightness, Theme;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -11,6 +12,7 @@ import 'package:flutter/widgets.dart';
 mixin NKPlatformViewMixin<T extends StatefulWidget> on State<T> {
   MethodChannel? channel;
   int? viewId;
+  Brightness? _lastBrightness;
 
   /// Subclasses override this with their channel prefix.
   /// Example: 'native_kit/tab_bar' produces 'native_kit/tab_bar_$viewId'
@@ -21,6 +23,7 @@ mixin NKPlatformViewMixin<T extends StatefulWidget> on State<T> {
     viewId = id;
     channel = MethodChannel('${channelPrefix}_$id');
     channel!.setMethodCallHandler(handleMethodCall);
+    _syncBrightness();
     onViewReady();
   }
 
@@ -29,6 +32,27 @@ mixin NKPlatformViewMixin<T extends StatefulWidget> on State<T> {
 
   /// Override to handle incoming method calls from native.
   Future<void> handleMethodCall(MethodCall call);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncBrightnessIfNeeded();
+  }
+
+  void _syncBrightnessIfNeeded() {
+    final brightness = Theme.of(context).brightness;
+    if (brightness != _lastBrightness && channel != null) {
+      _syncBrightness();
+    }
+  }
+
+  void _syncBrightness() {
+    final brightness = Theme.of(context).brightness;
+    _lastBrightness = brightness;
+    channel?.invokeMethod('setBrightness', {
+      'isDark': brightness == Brightness.dark,
+    });
+  }
 
   /// Gesture recognizers that eagerly claim touches so native UIKit controls
   /// receive proper press/drag feedback instead of Flutter intercepting them.

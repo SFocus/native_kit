@@ -127,7 +127,7 @@ class _NKProgressViewState extends State<NKProgressView>
       if (widget.trackColor != null)
         'trackColor': widget.trackColor!.toARGB32(),
       'spinnerSize': widget.spinnerSize.name,
-      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
+      'cornerRadius': ?effectiveCornerRadius,
     };
   }
 

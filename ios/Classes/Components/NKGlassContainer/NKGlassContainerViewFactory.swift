@@ -54,6 +54,11 @@ final class NKGlassContainerPlatformView: NSObject, FlutterPlatformView {
         }
 
         configure(with: args)
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            effectView.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { effectView }
@@ -101,6 +106,14 @@ final class NKGlassContainerPlatformView: NSObject, FlutterPlatformView {
             }
             applyParams(args)
             result(nil)
+
+        case "setBrightness":
+            if let args = call.arguments as? [String: Any],
+               let isDark = args["isDark"] as? Bool {
+                effectView.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
+            result(nil)
+
         default:
             result(FlutterMethodNotImplemented)
         }

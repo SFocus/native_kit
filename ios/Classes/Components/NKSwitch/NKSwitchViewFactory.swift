@@ -57,6 +57,11 @@ final class NKSwitchPlatformView: NSObject, FlutterPlatformView {
 
         configure(with: args)
         setupSwitch()
+
+        if let arguments = args as? [String: Any],
+           let isDark = arguments["isDark"] as? Bool {
+            container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        }
     }
 
     func view() -> UIView { container }
@@ -102,6 +107,8 @@ final class NKSwitchPlatformView: NSObject, FlutterPlatformView {
         channel.invokeMethod("onValueChanged", arguments: uiSwitch.isOn)
     }
 
+    // MARK: - Method Channel Handler
+
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let args = call.arguments as? [String: Any] else {
             result(FlutterError(code: "INVALID_ARGS", message: "Expected dictionary", details: nil))
@@ -124,6 +131,12 @@ final class NKSwitchPlatformView: NSObject, FlutterPlatformView {
         case "setEnabled":
             let enabled = args["enabled"] as? Bool ?? true
             uiSwitch.isEnabled = enabled
+            result(nil)
+
+        case "setBrightness":
+            if let isDark = args["isDark"] as? Bool {
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
             result(nil)
 
         default:

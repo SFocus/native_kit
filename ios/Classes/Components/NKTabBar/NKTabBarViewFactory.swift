@@ -34,7 +34,7 @@ import UIKit
 @available(iOS 18.0, *)
 final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private let channel: FlutterMethodChannel
-    private let container: NKTabBarContainerView
+    private let container: UIView
     private var tabBar: UITabBar?
     private var selectedIndex: Int = 0
     private var items: [TabItemData] = []
@@ -42,6 +42,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private var selectedItemColor: UIColor?
     private var unselectedItemColor: UIColor?
     private var textStyleDict: [String: Any]?
+    private var isDark: Bool = false
 
     init(
         frame: CGRect,
@@ -53,10 +54,9 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             name: "native_kit/tab_bar_\(viewId)",
             binaryMessenger: registrar.messenger()
         )
-        self.container = NKTabBarContainerView(frame: frame)
+        self.container = UIView(frame: frame)
         self.container.backgroundColor = .clear
         super.init()
-        self.container.platformView = self
 
         channel.setMethodCallHandler { [weak self] call, result in
             self?.handleMethodCall(call, result: result)
@@ -74,6 +74,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         let itemsData = arguments["items"] as? [[String: Any]] ?? []
         self.items = itemsData.map { TabItemData(from: $0) }
         self.selectedIndex = arguments["currentIndex"] as? Int ?? 0
+        self.isDark = arguments["isDark"] as? Bool ?? false
 
         if let color = arguments["backgroundColor"] as? Int64 {
             self.bgColor = UIColor.fromARGB(color)
@@ -107,8 +108,13 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     }
 
     private func configureAppearance(_ tabBar: UITabBar) {
+        // Lock the interface style to match Flutter's theme so iOS doesn't
+        // flip between light/dark during navigation transitions.
+        container.overrideUserInterfaceStyle = isDark ? .dark : .light
+        tabBar.overrideUserInterfaceStyle = isDark ? .dark : .light
+
         // Reset direct color properties so stale values don't persist
-        // when colors are removed or when iOS alters them during transitions.
+        // when colors are removed via an update call.
         tabBar.tintColor = nil
         tabBar.unselectedItemTintColor = nil
 
@@ -214,18 +220,6 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         return item
     }
 
-    /// Re-sets only the tint properties that iOS may alter during navigation.
-    /// Avoids recreating UITabBarAppearance which causes a visible flash.
-    func reapplyAppearance() {
-        guard let tabBar = self.tabBar else { return }
-        if let selectedColor = selectedItemColor {
-            tabBar.tintColor = selectedColor
-        }
-        if let unselectedColor = unselectedItemColor {
-            tabBar.unselectedItemTintColor = unselectedColor
-        }
-    }
-
     func setSelectedIndex(_ index: Int) {
         selectedIndex = index
         guard let items = tabBar?.items, items.indices.contains(index) else { return }
@@ -237,6 +231,8 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         items[index].badge = badge
         tabBar?.items?[index].badgeValue = badge
     }
+
+    // MARK: - Method Channel Handler
 
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let args = call.arguments as? [String: Any] else {
@@ -250,6 +246,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             let itemsData = args["items"] as? [[String: Any]] ?? []
             self.items = itemsData.map { TabItemData(from: $0) }
             self.selectedIndex = args["currentIndex"] as? Int ?? 0
+            self.isDark = args["isDark"] as? Bool ?? self.isDark
 
             // Reset colors before re-applying so removed colors clear properly
             self.bgColor = nil
@@ -301,6 +298,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             }
             result(nil)
 
+        case "setBrightness":
+            if let isDark = args["isDark"] as? Bool {
+                self.isDark = isDark
+                container.overrideUserInterfaceStyle = isDark ? .dark : .light
+                tabBar?.overrideUserInterfaceStyle = isDark ? .dark : .light
+            }
+            result(nil)
+
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -329,23 +334,6 @@ extension NKTabBarPlatformView: UITabBarDelegate {
 
         selectedIndex = index
         channel.invokeMethod("onTabSelected", arguments: index)
-    }
-}
-
-// MARK: - Container View
-
-/// Custom container that re-applies tab bar appearance when the view
-/// comes back into view (e.g., after a pushed route is popped).
-/// iOS may alter tintColor/appearance during navigation transitions.
-@available(iOS 18.0, *)
-private class NKTabBarContainerView: UIView {
-    weak var platformView: NKTabBarPlatformView?
-
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        if window != nil {
-            platformView?.reapplyAppearance()
-        }
     }
 }
 
