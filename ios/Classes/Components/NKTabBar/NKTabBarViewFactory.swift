@@ -214,14 +214,16 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         return item
     }
 
-    /// Re-applies the current appearance to the tab bar.
-    /// Called by the container view when it returns to a window after navigation.
+    /// Re-sets only the tint properties that iOS may alter during navigation.
+    /// Avoids recreating UITabBarAppearance which causes a visible flash.
     func reapplyAppearance() {
         guard let tabBar = self.tabBar else { return }
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        configureAppearance(tabBar)
-        CATransaction.commit()
+        if let selectedColor = selectedItemColor {
+            tabBar.tintColor = selectedColor
+        }
+        if let unselectedColor = unselectedItemColor {
+            tabBar.unselectedItemTintColor = unselectedColor
+        }
     }
 
     func setSelectedIndex(_ index: Int) {
