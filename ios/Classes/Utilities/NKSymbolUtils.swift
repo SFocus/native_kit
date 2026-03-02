@@ -27,7 +27,21 @@ struct NKSymbolUtils {
                 return nil
             }
             let scale = dict["scale"] as? CGFloat ?? 1.0
-            return UIImage(data: typedData.data, scale: scale)
+            guard var image = UIImage(data: typedData.data, scale: scale) else {
+                return nil
+            }
+
+            // If a tint color is provided, bake it into the image as original
+            if let tintARGB = dict["tintColor"] as? Int64 {
+                let tint = UIColor.fromARGB(tintARGB)
+                return image.withTintColor(tint, renderingMode: .alwaysOriginal)
+            }
+
+            let modeStr = dict["renderingMode"] as? String ?? "template"
+            let mode: UIImage.RenderingMode = modeStr == "original"
+                ? .alwaysOriginal
+                : .alwaysTemplate
+            return image.withRenderingMode(mode)
 
         default:
             return nil

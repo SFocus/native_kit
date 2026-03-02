@@ -1,7 +1,22 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter/services.dart' show rootBundle;
+
+/// Controls how a custom image is rendered in native components.
+///
+/// - [template]: The image is treated as a mask and tinted by the component's
+///   tint color. Best for monochrome icons (tab bars, buttons, menus).
+/// - [original]: The image keeps its original colors. Best for full-color
+///   images, logos, or photos.
+enum NKImageRenderingMode {
+  /// Image is tinted by the component's color (default).
+  template,
+
+  /// Image keeps its original colors.
+  original,
+}
 
 /// Base type for all image sources that can be passed to NK components.
 ///
@@ -44,7 +59,26 @@ class NKImageData extends NKImageSource {
   /// were rendered at that density.
   final double scale;
 
-  const NKImageData(this.bytes, {this.scale = 1.0});
+  /// How the image should be rendered by native components.
+  ///
+  /// Defaults to [NKImageRenderingMode.template], which tints the image
+  /// using the component's tint color (ideal for icons).
+  /// Use [NKImageRenderingMode.original] to preserve the image's own colors.
+  final NKImageRenderingMode renderingMode;
+
+  /// Optional tint color applied to the image.
+  ///
+  /// When set, the image is rendered with this specific color regardless of the
+  /// component's tint color. The image is always rendered as original (not
+  /// template) when a tint color is provided, since the color is baked in.
+  final Color? tintColor;
+
+  const NKImageData(
+    this.bytes, {
+    this.scale = 1.0,
+    this.renderingMode = NKImageRenderingMode.template,
+    this.tintColor,
+  });
 
   /// Loads a PNG/image asset directly into [NKImageData].
   ///
@@ -58,9 +92,16 @@ class NKImageData extends NKImageSource {
   static Future<NKImageData> fromAsset(
     String assetPath, {
     double devicePixelRatio = 1.0,
+    NKImageRenderingMode renderingMode = NKImageRenderingMode.template,
+    Color? tintColor,
   }) async {
     final data = await rootBundle.load(assetPath);
-    return NKImageData(data.buffer.asUint8List(), scale: devicePixelRatio);
+    return NKImageData(
+      data.buffer.asUint8List(),
+      scale: devicePixelRatio,
+      renderingMode: renderingMode,
+      tintColor: tintColor,
+    );
   }
 
   /// Renders a [ui.Picture] to PNG bytes and wraps it in [NKImageData].
@@ -74,6 +115,8 @@ class NKImageData extends NKImageSource {
     ui.Picture picture, {
     required ui.Size size,
     double devicePixelRatio = 1.0,
+    NKImageRenderingMode renderingMode = NKImageRenderingMode.template,
+    Color? tintColor,
   }) async {
     final int width = (size.width * devicePixelRatio).ceil();
     final int height = (size.height * devicePixelRatio).ceil();
@@ -96,6 +139,8 @@ class NKImageData extends NKImageSource {
     return NKImageData(
       byteData.buffer.asUint8List(),
       scale: devicePixelRatio,
+      renderingMode: renderingMode,
+      tintColor: tintColor,
     );
   }
 
@@ -104,6 +149,8 @@ class NKImageData extends NKImageSource {
         'type': 'image_data',
         'data': bytes,
         'scale': scale,
+        'renderingMode': renderingMode.name,
+        if (tintColor != null) 'tintColor': tintColor!.toARGB32(),
       };
 
   @override
@@ -112,8 +159,10 @@ class NKImageData extends NKImageSource {
       other is NKImageData &&
           runtimeType == other.runtimeType &&
           bytes.length == other.bytes.length &&
-          scale == other.scale;
+          scale == other.scale &&
+          renderingMode == other.renderingMode &&
+          tintColor == other.tintColor;
 
   @override
-  int get hashCode => Object.hash(bytes.length, scale);
+  int get hashCode => Object.hash(bytes.length, scale, renderingMode, tintColor);
 }
