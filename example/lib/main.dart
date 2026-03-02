@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:native_kit/native_kit.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Register custom fonts with native iOS so UIKit views can use them.
+  await NKFontLoader.registerFonts([
+    'assets/fonts/Inter-Regular.ttf',
+    'assets/fonts/Inter-Medium.ttf',
+    'assets/fonts/Inter-SemiBold.ttf',
+    'assets/fonts/Inter-Bold.ttf',
+    'assets/fonts/PlayfairDisplay-Regular.ttf',
+    'assets/fonts/PlayfairDisplay-Bold.ttf',
+    'assets/fonts/Pacifico-Regular.ttf',
+  ]);
+
   runApp(const MyApp());
 }
 
@@ -24,6 +37,7 @@ class _MyAppState extends State<MyApp> {
     GlassDemoPage(),
     ToolbarDemoPage(),
     PickerDemoPage(),
+    CustomFontDemoPage(),
   ];
 
   @override
@@ -85,6 +99,11 @@ class _MyAppState extends State<MyApp> {
                 title: 'Pickers',
                 icon: NKSFSymbol('calendar'),
                 selectedIcon: NKSFSymbol('calendar'),
+              ),
+              NKTabBarItem(
+                title: 'Fonts',
+                icon: NKSFSymbol('textformat'),
+                selectedIcon: NKSFSymbol('textformat'),
               ),
             ],
             currentIndex: _selectedIndex,
@@ -983,5 +1002,369 @@ class _PickerDemoPageState extends State<PickerDemoPage> {
       ],
     );
   }
+}
 
+// ---------------------------------------------------------------------------
+// Custom Font Demo Page
+// ---------------------------------------------------------------------------
+
+class CustomFontDemoPage extends StatefulWidget {
+  const CustomFontDemoPage({super.key});
+
+  @override
+  State<CustomFontDemoPage> createState() => _CustomFontDemoPageState();
+}
+
+class _CustomFontDemoPageState extends State<CustomFontDemoPage> {
+  int _segmentIndex = 0;
+  double _progress = 0.65;
+  bool _useTheme = true;
+
+  static const _interStyle = NKTextStyle(
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontWeight: NKFontWeight.semibold,
+  );
+
+  static const _playfairStyle = NKTextStyle(
+    fontFamily: 'PlayfairDisplay',
+    fontSize: 16,
+    fontWeight: NKFontWeight.bold,
+  );
+
+  static const _pacificoStyle = NKTextStyle(
+    fontFamily: 'Pacifico',
+    fontSize: 16,
+    fontWeight: NKFontWeight.regular,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final body = ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Text('Custom Fonts',
+            style: Theme.of(context).textTheme.headlineMedium),
+        const SizedBox(height: 8),
+        const Text(
+          'All components below use fonts registered via NKFontLoader '
+          'and styled through NKTheme / per-component overrides.',
+        ),
+        const SizedBox(height: 16),
+
+        // Theme toggle
+        Row(
+          children: [
+            const Text('NKTheme (Inter):'),
+            const Spacer(),
+            NKSwitch(
+              value: _useTheme,
+              onChanged: (v) => setState(() => _useTheme = v),
+              activeColor: Colors.indigo,
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // --- NKSegmentedControl ---
+        Text('NKSegmentedControl',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text('Using theme font (Inter) via NKTheme'),
+        const SizedBox(height: 8),
+        NKSegmentedControl(
+          labels: const ['Day', 'Week', 'Month', 'Year'],
+          selectedIndex: _segmentIndex,
+          onValueChanged: (i) => setState(() => _segmentIndex = i),
+          tintColor: Colors.indigo,
+          cornerRadius: 14,
+        ),
+        const SizedBox(height: 32),
+
+        // --- NKButton with theme font ---
+        Text('NKButton', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text('Theme font (Inter) — inherited from NKTheme'),
+        const SizedBox(height: 8),
+        NKButton(
+          label: 'Inter Button',
+          icon: NKSFSymbols.heart,
+          style: NKButtonStyle.filled,
+          tintColor: Colors.indigo,
+          cornerRadius: 14,
+          onPressed: () => _showSnack(context, 'Inter button pressed'),
+        ),
+        const SizedBox(height: 16),
+        const Text('Per-component override (Pacifico — handwriting)'),
+        const SizedBox(height: 8),
+        NKButton(
+          label: 'Pacifico Button',
+          icon: NKSFSymbols.star,
+          style: NKButtonStyle.borderedProminent,
+          tintColor: Colors.deepPurple,
+          textStyle: _pacificoStyle,
+          cornerRadius: 20,
+          onPressed: () => _showSnack(context, 'Pacifico button pressed'),
+        ),
+        const SizedBox(height: 8),
+        NKButton(
+          label: 'Playfair Button',
+          icon: NKSFSymbols.heart,
+          style: NKButtonStyle.filled,
+          tintColor: Colors.teal,
+          textStyle: _playfairStyle,
+          cornerRadius: 14,
+          onPressed: () => _showSnack(context, 'Playfair button pressed'),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: NKButton(
+                label: 'Glass',
+                style: NKButtonStyle.glass,
+                tintColor: Colors.indigo,
+                onPressed: () {},
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: NKButton(
+                label: 'Tinted',
+                style: NKButtonStyle.tinted,
+                tintColor: Colors.indigo,
+                textStyle: const NKTextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: NKFontWeight.bold,
+                ),
+                onPressed: () {},
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: NKButton(
+                label: 'Gray',
+                style: NKButtonStyle.gray,
+                textStyle: _pacificoStyle,
+                onPressed: () {},
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        // --- NKProgressView with corner radius ---
+        Text('NKProgressView',
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text('Corner radius: 6 (theme: 14)'),
+        const SizedBox(height: 8),
+        NKProgressView(
+          style: NKProgressViewStyle.bar,
+          value: _progress,
+          tintColor: Colors.indigo,
+          cornerRadius: 6,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text('${(_progress * 100).round()}%'),
+            const Spacer(),
+            TextButton(
+              onPressed: () => setState(
+                  () => _progress = (_progress + 0.1).clamp(0.0, 1.0)),
+              child: const Text('+10%'),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _progress = 0.0),
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            NKProgressView(
+              style: NKProgressViewStyle.spinner,
+              spinnerSize: NKSpinnerSize.medium,
+              tintColor: Colors.indigo,
+            ),
+            NKProgressView(
+              style: NKProgressViewStyle.spinner,
+              spinnerSize: NKSpinnerSize.large,
+              tintColor: Colors.deepPurple,
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+
+        // --- Toolbar demo with custom font ---
+        Text('NKToolbar', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text('Tap to see toolbar with Pacifico title'),
+        const SizedBox(height: 8),
+        _DemoCard(
+          title: 'Pacifico Toolbar',
+          subtitle: 'Handwriting title font + theme body',
+          icon: NKSFSymbol('textformat.size'),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _CustomFontToolbarScreen(useTheme: _useTheme),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+      ],
+    );
+
+    if (_useTheme) {
+      return NKTheme(
+        data: const NKThemeData(
+          textStyle: _interStyle,
+          cornerRadius: 14,
+          tintColor: Colors.indigo,
+        ),
+        child: body,
+      );
+    }
+    return body;
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Custom Font Toolbar Screen
+// ---------------------------------------------------------------------------
+
+class _CustomFontToolbarScreen extends StatefulWidget {
+  final bool useTheme;
+  const _CustomFontToolbarScreen({required this.useTheme});
+
+  @override
+  State<_CustomFontToolbarScreen> createState() =>
+      _CustomFontToolbarScreenState();
+}
+
+class _CustomFontToolbarScreenState extends State<_CustomFontToolbarScreen> {
+  int _segmentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget content = Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverNKToolbar(
+            title: 'Custom Fonts',
+            onBackPressed: () => Navigator.of(context).pop(),
+            tintColor: Colors.indigo,
+            titleTextStyle: const NKTextStyle(
+              fontFamily: 'Pacifico',
+              fontSize: 34,
+              fontWeight: NKFontWeight.regular,
+            ),
+            trailingItems: [
+              NKToolbarItem(
+                icon: NKSFSymbol('info.circle'),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content:
+                            Text('Title uses Pacifico, body uses Inter')),
+                  );
+                },
+              ),
+            ],
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: NKSegmentedControl(
+                  labels: const ['Overview', 'Details', 'Stats'],
+                  selectedIndex: _segmentIndex,
+                  onValueChanged: (i) => setState(() => _segmentIndex = i),
+                  cornerRadius: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: NKButton(
+                  label: 'Action Button (Inter)',
+                  icon: NKSFSymbols.heart,
+                  style: NKButtonStyle.filled,
+                  cornerRadius: 14,
+                  onPressed: () {},
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: NKButton(
+                  label: 'Pacifico Override',
+                  icon: NKSFSymbols.star,
+                  style: NKButtonStyle.tinted,
+                  textStyle: const NKTextStyle(
+                    fontFamily: 'Pacifico',
+                    fontSize: 16,
+                    fontWeight: NKFontWeight.regular,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: NKProgressView(
+                  style: NKProgressViewStyle.bar,
+                  value: 0.75,
+                  cornerRadius: 6,
+                ),
+              ),
+              const SizedBox(height: 48),
+              const Center(
+                child: Text(
+                  'Scroll up to see the large title collapse',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              // Extra space for scrolling
+              for (int i = 0; i < 10; i++) ...[
+                const Divider(),
+                ListTile(
+                  title: Text('Item ${i + 1}'),
+                  subtitle: const Text('Demonstrates scrollable content'),
+                  trailing: const Icon(Icons.chevron_right),
+                ),
+              ],
+              const SizedBox(height: 32),
+            ]),
+          ),
+        ],
+      ),
+    );
+
+    if (widget.useTheme) {
+      return NKTheme(
+        data: const NKThemeData(
+          textStyle: NKTextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: NKFontWeight.semibold,
+          ),
+          cornerRadius: 14,
+          tintColor: Colors.indigo,
+        ),
+        child: content,
+      );
+    }
+    return content;
+  }
 }
