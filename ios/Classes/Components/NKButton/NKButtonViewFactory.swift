@@ -52,6 +52,7 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
             binaryMessenger: registrar.messenger()
         )
         self.container = UIView(frame: frame)
+        self.container.backgroundColor = .clear
         super.init()
 
         channel.setMethodCallHandler { [weak self] call, result in
@@ -88,11 +89,8 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
         }
 
         if let iconData = iconData,
-           let parsed = NKSymbolUtils.parseIcon(from: iconData) {
-            configuration.image = NKSymbolUtils.createImage(
-                name: parsed.name,
-                config: parsed.config
-            )
+           let image = NKSymbolUtils.createImageFromSource(iconData) {
+            configuration.image = image
             configuration.imagePadding = label != nil ? 6 : 0
         }
 
@@ -106,18 +104,12 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
 
         // Corner radius
         self.cornerRadius = arguments["cornerRadius"] as? CGFloat
-        if let cornerRadius = self.cornerRadius {
-            configuration.background.cornerRadius = cornerRadius
-        }
+        applyCornerRadius(to: &configuration, style: styleName)
 
         button = UIButton(configuration: configuration)
         button.isEnabled = enabled
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
-
-        if let tintColor = self.tintColor {
-            button.tintColor = tintColor
-        }
 
         container.addSubview(button)
         NSLayoutConstraint.activate([
@@ -178,9 +170,7 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
             }
 
             applyTextStyle(to: &newConfig)
-            if let cornerRadius = self.cornerRadius {
-                newConfig.background.cornerRadius = cornerRadius
-            }
+            applyCornerRadius(to: &newConfig, style: styleName)
 
             button.configuration = newConfig
             result(nil)
@@ -193,9 +183,7 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
 
             if var config = button.configuration {
                 applyTextStyle(to: &config)
-                if let cornerRadius = self.cornerRadius {
-                    config.background.cornerRadius = cornerRadius
-                }
+                applyCornerRadius(to: &config, style: currentStyle)
                 button.configuration = config
             }
             result(nil)
@@ -206,6 +194,20 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     }
 
     // MARK: - Helpers
+
+    private func applyCornerRadius(to configuration: inout UIButton.Configuration, style: String) {
+        guard let cornerRadius = self.cornerRadius else { return }
+        if #available(iOS 26.0, *) {
+            // On iOS 26+, avoid mutating configuration.background for non-glass
+            // styles — it prevents the automatic liquid glass treatment.
+            let glassStyles: Set<String> = ["glass", "clearGlass", "prominentGlass", "prominentClearGlass"]
+            if glassStyles.contains(style) {
+                configuration.background.cornerRadius = cornerRadius
+            }
+        } else {
+            configuration.background.cornerRadius = cornerRadius
+        }
+    }
 
     private func applyTextStyle(to configuration: inout UIButton.Configuration) {
         if let font = NKFontUtils.font(from: textStyleDict) {
