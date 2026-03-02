@@ -36,7 +36,7 @@ flutter pub get
 | **NKSlider** | Value slider | `UISlider` | `CupertinoSlider` |
 | **NKButton** | Button (10 styles) | `UIButton.Configuration` | `CupertinoButton` |
 | **NKSegmentedControl** | Segmented picker | `UISegmentedControl` | `CupertinoSlidingSegmentedControl` |
-| **NKIcon** | SF Symbol renderer | `UIImageView` | `Icon` |
+| **NKIcon** | SF Symbol / custom image renderer | `UIImageView` | `Icon` |
 | **NKPopupMenu** | Context menu | `UIMenu` + `UIButton` | `CupertinoActionSheet` |
 | **NKToolbar** | Navigation bar | `UINavigationBar` | — |
 | **SliverNKToolbar** | Collapsible nav bar | `UINavigationBar` | — |
@@ -171,35 +171,33 @@ NKSegmentedControl(
 
 ### NKIcon
 
-A native SF Symbol renderer with 4 rendering modes.
+A native icon renderer that displays SF Symbols or custom images (SVG, PNG) via `NKImageSource`.
 
 ```dart
+// SF Symbol
 NKIcon(
-  symbol: NKSFSymbols.heart,
+  source: NKSFSymbols.heart,
   size: 32.0,
   color: Colors.red,
 )
 
 // Multi-color rendering
 NKIcon(
-  symbol: NKSFSymbol('cloud.sun.rain.fill'),
+  source: NKSFSymbol('cloud.sun.rain.fill'),
   size: 48.0,
   mode: NKSymbolRenderingMode.multicolor,
 )
 
-// Palette rendering
+// Custom image (e.g. from SVG or PNG)
 NKIcon(
-  symbol: NKSFSymbol('person.crop.circle.badge.checkmark'),
-  size: 48.0,
-  mode: NKSymbolRenderingMode.palette,
-  color: Colors.blue,
-  secondaryColor: Colors.green,
+  source: myNKImageData,
+  size: 32.0,
 )
 ```
 
-**Modes:** `monochrome`, `hierarchical`, `palette`, `multicolor`.
+**Modes (SF Symbols only):** `monochrome`, `hierarchical`, `palette`, `multicolor`.
 
-**Props:** `symbol`, `size`, `color`, `mode`, `secondaryColor`, `tertiaryColor`.
+**Props:** `source` (`NKImageSource`), `size`, `color`, `mode`, `secondaryColor`, `tertiaryColor`.
 
 ---
 
@@ -512,9 +510,11 @@ Components resolve styling in this order: **widget property > NKTheme > system d
 
 ---
 
-## SF Symbols
+## Icons & Images
 
-All components share the `NKSFSymbol` system:
+All icon-capable components accept `NKImageSource`, which has two subtypes:
+
+### SF Symbols (`NKSFSymbol`)
 
 ```dart
 // Predefined constants
@@ -530,6 +530,46 @@ NKSFSymbol('gear', config: NKSFSymbolConfig(weight: 'bold', scale: 'large'))
 
 Browse all symbols: [SF Symbols App](https://developer.apple.com/sf-symbols/)
 
+### Custom Images (`NKImageData`)
+
+Use `NKImageData` to display your own images (SVG, PNG, etc.) in any NK component that accepts an icon.
+
+**From a `dart:ui` Picture** (e.g. SVG rendered via `flutter_svg`):
+
+```dart
+import 'dart:ui' as ui;
+import 'package:flutter_svg/flutter_svg.dart';
+
+final pictureInfo = await vg.loadPicture(SvgAssetLoader('assets/svg/icon.svg'), null);
+final imageData = await NKImageData.fromPicture(
+  pictureInfo.picture,
+  size: ui.Size(24, 24),
+  devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+);
+pictureInfo.picture.dispose();
+
+// Use in any component
+NKIcon(source: imageData, size: 32)
+NKButton(label: 'Action', icon: imageData, style: NKButtonStyle.filled, onPressed: () {})
+```
+
+**From a PNG asset** (zero conversion overhead):
+
+```dart
+final imageData = await NKImageData.fromAsset(
+  'assets/images/logo.png',
+  devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+);
+```
+
+**From raw bytes:**
+
+```dart
+final imageData = NKImageData(pngBytes, scale: 3.0);
+```
+
+`NKImageData` works with: **NKIcon**, **NKButton**, **NKTabBar**, **NKPopupMenu**, **NKGlassButtonGroup**, **NKToast**.
+
 ## Example App
 
 ```bash
@@ -537,7 +577,16 @@ cd example
 flutter run
 ```
 
-The example app demonstrates all components with interactive demos, including a custom fonts page showing `NKFontLoader`, `NKTheme`, and per-component styling overrides.
+The example app is organized into 4 tabs:
+
+| Tab | Content |
+|-----|---------|
+| **Controls** | NKSwitch, NKSlider, NKSegmentedControl, NKProgressView, NKDatePicker |
+| **Actions** | All 10 NKButton styles, icon-only buttons, NKPopupMenu, NKGlassButtonGroup |
+| **Glass** | NKGlassContainer, NKGlassCard, NKToast, NKIcon rendering modes, NKSlider ticks |
+| **Customize** | NKTheme toggle, custom fonts, NKToolbar demos (sub-screens), SVG image demo |
+
+The app uses NK components throughout — `NKToolbar` for the navigation bar, `NKTabBar` for bottom navigation, `NKGlassCard` for section cards, and `NKToast` for notifications.
 
 ## Architecture
 
@@ -545,7 +594,7 @@ The example app demonstrates all components with interactive demos, including a 
 lib/
   native_kit.dart      - Barrel exports
   src/
-    models/            - NKSFSymbol, NKTextStyle, NKGlassStyle, NKTheme
+    models/            - NKImageSource, NKSFSymbol, NKImageData, NKTextStyle, NKGlassStyle, NKTheme
     utilities/         - NKFontLoader, platform view mixin, platform builder
     components/
       nk_tab_bar/      - NKTabBar + NKTabBarItem
