@@ -2,9 +2,12 @@ import Flutter
 import UIKit
 
 public class NativeKitPlugin: NSObject, FlutterPlugin {
+  private var registrar: FlutterPluginRegistrar?
+
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "native_kit", binaryMessenger: registrar.messenger())
     let instance = NativeKitPlugin()
+    instance.registrar = registrar
     registrar.addMethodCallDelegate(instance, channel: channel)
 
     if #available(iOS 18.0, *) {
@@ -64,6 +67,28 @@ public class NativeKitPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
+
+    case "registerFont":
+      guard let args = call.arguments as? [String: Any],
+            let assetPath = args["assetPath"] as? String,
+            let registrar = self.registrar else {
+        result(false)
+        return
+      }
+
+      let bundleKey: String
+      if let package = args["package"] as? String {
+        bundleKey = registrar.lookupKey(forAsset: assetPath, fromPackage: package)
+      } else {
+        bundleKey = registrar.lookupKey(forAsset: assetPath)
+      }
+
+      guard let path = Bundle.main.path(forResource: bundleKey, ofType: nil) else {
+        result(false)
+        return
+      }
+
+      result(NKFontUtils.registerFont(at: path))
 
     default:
       result(FlutterMethodNotImplemented)
