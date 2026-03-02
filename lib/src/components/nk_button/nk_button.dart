@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
+import '../../models/nk_text_style.dart';
+import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
@@ -72,8 +74,8 @@ class NKButton extends StatefulWidget {
   /// The text label displayed on the button.
   final String? label;
 
-  /// An optional SF Symbol icon displayed alongside the label.
-  final NKSFSymbol? icon;
+  /// An optional icon displayed alongside the label (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// The visual style of the button.
   final NKButtonStyle style;
@@ -90,6 +92,12 @@ class NKButton extends StatefulWidget {
   /// The height of the button.
   final double height;
 
+  /// Text style for the button label (font family, size, weight).
+  final NKTextStyle? textStyle;
+
+  /// Corner radius of the button background.
+  final double? cornerRadius;
+
   const NKButton({
     super.key,
     this.label,
@@ -99,17 +107,21 @@ class NKButton extends StatefulWidget {
     this.tintColor,
     this.enabled = true,
     this.height = 44.0,
+    this.textStyle,
+    this.cornerRadius,
   });
 
   /// Creates an icon-only button with no label.
   const NKButton.icon({
     super.key,
-    required NKSFSymbol this.icon,
+    required NKImageSource this.icon,
     this.style = NKButtonStyle.filled,
     this.onPressed,
     this.tintColor,
     this.enabled = true,
     this.height = 44.0,
+    this.textStyle,
+    this.cornerRadius,
   }) : label = null;
 
   @override
@@ -141,6 +153,10 @@ class _NKButtonState extends State<NKButton>
     if (oldWidget.style != widget.style) {
       _setStyle(widget.style);
     }
+    if (oldWidget.textStyle != widget.textStyle ||
+        oldWidget.cornerRadius != widget.cornerRadius) {
+      _updateStyling();
+    }
   }
 
   Future<void> _setEnabled(bool enabled) async {
@@ -167,19 +183,38 @@ class _NKButtonState extends State<NKButton>
     }
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Future<void> _updateStyling() async {
+    try {
+      await channel?.invokeMethod('updateStyling', {
+        if (widget.textStyle != null) 'textStyle': widget.textStyle!.toMap(),
+        if (widget.cornerRadius != null) 'cornerRadius': widget.cornerRadius,
+      });
+    } catch (e) {
+      debugPrint('NKButton: Failed to update styling: $e');
+    }
+  }
+
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveTextStyle = widget.textStyle ?? theme?.textStyle;
+    final effectiveCornerRadius = widget.cornerRadius ?? theme?.cornerRadius;
+    final effectiveTintColor = widget.tintColor ?? theme?.tintColor;
+
     return {
       if (widget.label != null) 'label': widget.label,
       if (widget.icon != null) 'icon': widget.icon!.toMap(),
       'style': widget.style.name,
       'enabled': widget.enabled,
-      if (widget.tintColor != null) 'tintColor': widget.tintColor!.toARGB32(),
+      if (effectiveTintColor != null)
+        'tintColor': effectiveTintColor.toARGB32(),
       'height': widget.height,
+      if (effectiveTextStyle != null) 'textStyle': effectiveTextStyle.toMap(),
+      if (effectiveCornerRadius != null) 'cornerRadius': effectiveCornerRadius,
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = NKTheme.of(context);
     final isIconOnly = widget.label == null && widget.icon != null;
     return SizedBox(
       height: widget.height,
@@ -187,7 +222,7 @@ class _NKButtonState extends State<NKButton>
       child: NKPlatformBuilder(
         iosBuilder: (_) => UiKitView(
           viewType: 'native_kit/button_view',
-          creationParams: _buildCreationParams(),
+          creationParams: _buildCreationParams(theme),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
           gestureRecognizers: eagerGestureRecognizers,

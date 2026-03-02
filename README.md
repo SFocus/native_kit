@@ -34,15 +34,24 @@ flutter pub get
 | **NKTabBar** | Bottom tab bar | `UITabBar` | `BottomNavigationBar` |
 | **NKSwitch** | Toggle switch | `UISwitch` | `CupertinoSwitch` |
 | **NKSlider** | Value slider | `UISlider` | `CupertinoSlider` |
-| **NKButton** | Button (6 styles) | `UIButton.Configuration` | `CupertinoButton` |
+| **NKButton** | Button (10 styles) | `UIButton.Configuration` | `CupertinoButton` |
 | **NKSegmentedControl** | Segmented picker | `UISegmentedControl` | `CupertinoSlidingSegmentedControl` |
-| **NKIcon** | SF Symbol renderer | `UIImageView` | `Icon` |
+| **NKIcon** | SF Symbol / custom image renderer | `UIImageView` | `Icon` |
 | **NKPopupMenu** | Context menu | `UIMenu` + `UIButton` | `CupertinoActionSheet` |
+| **NKToolbar** | Navigation bar | `UINavigationBar` | — |
+| **SliverNKToolbar** | Collapsible nav bar | `UINavigationBar` | — |
+| **NKProgressView** | Progress indicator | `UIProgressView` / `UIActivityIndicatorView` | `CupertinoActivityIndicator` |
+| **NKDatePicker** | Date & time picker | `UIDatePicker` | — |
+| **NKGlassContainer** | Glass background | Liquid Glass material | `Container` |
+| **NKGlassCard** | Glass card | Liquid Glass material | `Container` |
+| **NKGlassButtonGroup** | Grouped glass buttons | Liquid Glass buttons | `CupertinoButton` |
+| **NKToast** | Toast notification | Liquid Glass overlay | `OverlayEntry` |
 
 All components use the `NK` prefix (NativeKit) and share a consistent architecture:
 - Per-view method channels for multi-instance support
 - SF Symbols integration via `NKSFSymbol`
 - Automatic fallback to Cupertino widgets on non-iOS platforms
+- Global theming via `NKTheme` with per-component overrides
 
 ---
 
@@ -98,7 +107,7 @@ NKSwitch(
 
 ### NKSlider
 
-A native iOS slider with optional step snapping.
+A native iOS slider with optional step snapping and iOS 26 tick marks.
 
 ```dart
 NKSlider(
@@ -111,13 +120,13 @@ NKSlider(
 )
 ```
 
-**Props:** `value`, `onChanged`, `onChangeStart`, `onChangeEnd`, `min`, `max`, `step`, `activeColor`, `inactiveColor`, `thumbColor`, `enabled`.
+**Props:** `value`, `onChanged`, `onChangeStart`, `onChangeEnd`, `min`, `max`, `step`, `activeColor`, `inactiveColor`, `thumbColor`, `enabled`, `numberOfTicks`, `allowsTickValuesOnly`, `neutralValue`.
 
 ---
 
 ### NKButton
 
-A native iOS button with 6 visual styles mapped to `UIButton.Configuration`.
+A native iOS button with 10 visual styles mapped to `UIButton.Configuration`.
 
 ```dart
 NKButton(
@@ -137,9 +146,9 @@ NKButton.icon(
 )
 ```
 
-**Styles:** `plain`, `gray`, `tinted`, `bordered`, `borderedProminent`, `filled`.
+**Styles:** `plain`, `gray`, `tinted`, `bordered`, `borderedProminent`, `filled`, `glass`, `clearGlass`, `prominentGlass`, `prominentClearGlass`.
 
-**Props:** `label`, `icon`, `style`, `onPressed`, `tintColor`, `enabled`.
+**Props:** `label`, `icon`, `style`, `onPressed`, `tintColor`, `enabled`, `textStyle`, `cornerRadius`.
 
 ---
 
@@ -156,41 +165,39 @@ NKSegmentedControl(
 )
 ```
 
-**Props:** `labels`, `icons` (optional `List<NKSFSymbol?>`), `selectedIndex`, `onValueChanged`, `tintColor`, `enabled`.
+**Props:** `labels`, `icons` (optional `List<NKSFSymbol?>`), `selectedIndex`, `onValueChanged`, `tintColor`, `enabled`, `textStyle`, `cornerRadius`.
 
 ---
 
 ### NKIcon
 
-A native SF Symbol renderer with 4 rendering modes.
+A native icon renderer that displays SF Symbols or custom images (SVG, PNG) via `NKImageSource`.
 
 ```dart
+// SF Symbol
 NKIcon(
-  symbol: NKSFSymbols.heart,
+  source: NKSFSymbols.heart,
   size: 32.0,
   color: Colors.red,
 )
 
 // Multi-color rendering
 NKIcon(
-  symbol: NKSFSymbol('cloud.sun.rain.fill'),
+  source: NKSFSymbol('cloud.sun.rain.fill'),
   size: 48.0,
   mode: NKSymbolRenderingMode.multicolor,
 )
 
-// Palette rendering
+// Custom image (e.g. from SVG or PNG)
 NKIcon(
-  symbol: NKSFSymbol('person.crop.circle.badge.checkmark'),
-  size: 48.0,
-  mode: NKSymbolRenderingMode.palette,
-  color: Colors.blue,
-  secondaryColor: Colors.green,
+  source: myNKImageData,
+  size: 32.0,
 )
 ```
 
-**Modes:** `monochrome`, `hierarchical`, `palette`, `multicolor`.
+**Modes (SF Symbols only):** `monochrome`, `hierarchical`, `palette`, `multicolor`.
 
-**Props:** `symbol`, `size`, `color`, `mode`, `secondaryColor`, `tertiaryColor`.
+**Props:** `source` (`NKImageSource`), `size`, `color`, `mode`, `secondaryColor`, `tertiaryColor`.
 
 ---
 
@@ -222,9 +229,292 @@ NKPopupMenu(
 
 ---
 
-## SF Symbols
+### NKToolbar
 
-All components share the `NKSFSymbol` system:
+A native iOS navigation bar (`UINavigationBar`) for use as `Scaffold.appBar`.
+
+```dart
+Scaffold(
+  appBar: NKToolbar(
+    title: 'Settings',
+    onBackPressed: () => Navigator.of(context).pop(),
+    tintColor: Colors.blue,
+    trailingItems: [
+      NKToolbarItem(
+        label: 'Done',
+        onPressed: () {},
+      ),
+    ],
+  ),
+  body: ...,
+)
+```
+
+**Props:** `title`, `prefersLargeTitles`, `onBackPressed`, `backButtonTitle`, `leadingItem`, `trailingItems`, `tintColor`, `backgroundColor`, `appearance`, `showSeparator`, `searchBar`, `titleTextStyle`.
+
+**Appearances:** `defaultAppearance`, `transparent`, `opaque`.
+
+---
+
+### SliverNKToolbar
+
+A sliver-based native navigation bar with collapsible large titles. Use inside a `CustomScrollView`.
+
+```dart
+CustomScrollView(
+  slivers: [
+    SliverNKToolbar(
+      title: 'Settings',
+      onBackPressed: () => Navigator.of(context).pop(),
+      tintColor: Colors.blue,
+      trailingItems: [
+        NKToolbarItem(label: 'Done', onPressed: () {}),
+      ],
+    ),
+    SliverList(...),
+  ],
+)
+```
+
+The large title is rendered in Flutter and collapses as you scroll, transitioning to a native inline title in the navigation bar.
+
+**Props:** `title`, `onBackPressed`, `backButtonTitle`, `leadingItem`, `trailingItems`, `tintColor`, `backgroundColor`, `appearance`, `searchBar`, `titleTextStyle`.
+
+---
+
+### NKProgressView
+
+A native iOS progress indicator — either a bar (`UIProgressView`) or spinner (`UIActivityIndicatorView`). Gets Liquid Glass styling automatically on iOS 26+.
+
+```dart
+// Determinate bar
+NKProgressView(
+  style: NKProgressViewStyle.bar,
+  value: 0.65,
+  tintColor: Colors.blue,
+)
+
+// Spinner
+NKProgressView(
+  style: NKProgressViewStyle.spinner,
+  spinnerSize: NKSpinnerSize.large,
+)
+```
+
+**Props:** `style` (`bar`/`spinner`), `value` (0.0–1.0, bar only), `tintColor`, `trackColor`, `spinnerSize` (`small`/`medium`/`large`), `cornerRadius`.
+
+---
+
+### NKDatePicker
+
+A native iOS date picker supporting all modes and styles.
+
+```dart
+// Compact date and time picker
+NKDatePicker(
+  mode: NKDatePickerMode.dateAndTime,
+  style: NKDatePickerStyle.compact,
+  initialDate: DateTime.now(),
+  onDateChanged: (date) => setState(() => _selectedDate = date),
+)
+
+// Inline calendar
+NKDatePicker(
+  mode: NKDatePickerMode.date,
+  style: NKDatePickerStyle.inline,
+  tintColor: Colors.blue,
+  onDateChanged: (date) => setState(() => _selectedDate = date),
+)
+```
+
+**Modes:** `date`, `time`, `dateAndTime`, `countdownTimer`.
+
+**Styles:** `compact`, `inline`, `wheels`.
+
+**Props:** `mode`, `style`, `initialDate`, `minimumDate`, `maximumDate`, `countdownDuration`, `minuteInterval`, `onDateChanged`, `onCountdownChanged`, `tintColor`.
+
+---
+
+### NKGlassContainer
+
+A Liquid Glass background container (iOS 26+). Falls back to a plain `Container` on earlier versions.
+
+```dart
+NKGlassContainer(
+  style: NKGlassStyle.regular,
+  cornerRadius: 20,
+  padding: EdgeInsets.all(16),
+  child: Text('Glass content'),
+)
+
+// Capsule shape
+NKGlassContainer(
+  capsule: true,
+  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+  child: Text('Capsule'),
+)
+```
+
+**Props:** `style` (`regular`/`clear`), `cornerRadius`, `capsule`, `tintColor`, `isInteractive`, `padding`, `width`, `height`, `child`.
+
+---
+
+### NKGlassCard
+
+A glass-styled card with an optional title. Composes `NKGlassContainer`.
+
+```dart
+NKGlassCard(
+  title: 'Settings',
+  tintColor: Colors.blue,
+  child: Text('Card content'),
+)
+```
+
+**Props:** `title`, `titleStyle`, `style`, `tintColor`, `cornerRadius`, `padding`, `width`, `child`.
+
+---
+
+### NKGlassButtonGroup
+
+A group of Liquid Glass buttons displayed in a horizontal row.
+
+```dart
+NKGlassButtonGroup(
+  buttons: [
+    NKGlassButton(label: 'Like', icon: NKSFSymbols.heart, onPressed: () {}),
+    NKGlassButton(label: 'Share', icon: NKSFSymbol('square.and.arrow.up'), onPressed: () {}),
+    NKGlassButton(label: 'Save', icon: NKSFSymbol('bookmark'), onPressed: () {}),
+  ],
+)
+```
+
+**Props:** `buttons`, `spacing`, `height`.
+
+---
+
+### NKToast
+
+An imperative toast notification with Liquid Glass styling.
+
+```dart
+// Show a toast
+NKToast.show(
+  context,
+  message: 'Item saved!',
+  icon: NKSFSymbol('checkmark.circle.fill'),
+  position: NKToastPosition.top,
+);
+
+// Dismiss early
+final dismiss = NKToast.show(context, message: 'Loading...');
+// ...later:
+dismiss();
+```
+
+**Props:** `message`, `icon`, `style`, `tintColor`, `duration`, `position` (`top`/`bottom`), `onDismissed`.
+
+---
+
+## Custom Fonts
+
+native_kit components render with the iOS system font (SF Pro) by default. You can use custom fonts from your Flutter project in native UIKit views through `NKFontLoader` and `NKTextStyle`.
+
+### 1. Add fonts to your project
+
+Declare fonts in your `pubspec.yaml` as usual:
+
+```yaml
+flutter:
+  assets:
+    - assets/fonts/
+
+  fonts:
+    - family: MyFont
+      fonts:
+        - asset: assets/fonts/MyFont-Regular.ttf
+        - asset: assets/fonts/MyFont-Bold.ttf
+          weight: 700
+```
+
+### 2. Register fonts with native iOS
+
+Flutter fonts are bundled as assets but **not** automatically available to native UIKit views. Call `NKFontLoader.registerFont()` at app startup to make them available:
+
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Register each font file individually
+  await NKFontLoader.registerFonts([
+    'assets/fonts/MyFont-Regular.ttf',
+    'assets/fonts/MyFont-Bold.ttf',
+  ]);
+
+  runApp(const MyApp());
+}
+```
+
+Fonts from **package dependencies** are also supported:
+
+```dart
+await NKFontLoader.registerFontFromPackage(
+  'fonts/PackageFont.ttf',
+  package: 'my_font_package',
+);
+```
+
+Any valid Flutter asset path works — `assets/`, `src/fonts/`, or any other declared asset directory.
+
+### 3. Apply fonts with NKTextStyle
+
+Use `NKTextStyle` to set font family, size, and weight on individual components:
+
+```dart
+NKButton(
+  label: 'Custom Font',
+  style: NKButtonStyle.filled,
+  textStyle: NKTextStyle(
+    fontFamily: 'MyFont',
+    fontSize: 16,
+    fontWeight: NKFontWeight.bold,
+  ),
+  onPressed: () {},
+)
+```
+
+`NKTextStyle` is supported on: **NKButton**, **NKTabBar**, **NKToolbar** / **SliverNKToolbar**, **NKSegmentedControl**.
+
+`cornerRadius` is supported on: **NKButton**, **NKSegmentedControl**, **NKProgressView**.
+
+### 4. Global theming with NKTheme
+
+Wrap your widget tree with `NKTheme` to set defaults for all NK components. Per-component properties always override theme defaults.
+
+```dart
+NKTheme(
+  data: NKThemeData(
+    textStyle: NKTextStyle(
+      fontFamily: 'MyFont',
+      fontSize: 14,
+      fontWeight: NKFontWeight.semibold,
+    ),
+    cornerRadius: 12.0,
+    tintColor: Colors.indigo,
+  ),
+  child: MaterialApp(...),
+)
+```
+
+Components resolve styling in this order: **widget property > NKTheme > system default**.
+
+---
+
+## Icons & Images
+
+All icon-capable components accept `NKImageSource`, which has two subtypes:
+
+### SF Symbols (`NKSFSymbol`)
 
 ```dart
 // Predefined constants
@@ -240,6 +530,46 @@ NKSFSymbol('gear', config: NKSFSymbolConfig(weight: 'bold', scale: 'large'))
 
 Browse all symbols: [SF Symbols App](https://developer.apple.com/sf-symbols/)
 
+### Custom Images (`NKImageData`)
+
+Use `NKImageData` to display your own images (SVG, PNG, etc.) in any NK component that accepts an icon.
+
+**From a `dart:ui` Picture** (e.g. SVG rendered via `flutter_svg`):
+
+```dart
+import 'dart:ui' as ui;
+import 'package:flutter_svg/flutter_svg.dart';
+
+final pictureInfo = await vg.loadPicture(SvgAssetLoader('assets/svg/icon.svg'), null);
+final imageData = await NKImageData.fromPicture(
+  pictureInfo.picture,
+  size: ui.Size(24, 24),
+  devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+);
+pictureInfo.picture.dispose();
+
+// Use in any component
+NKIcon(source: imageData, size: 32)
+NKButton(label: 'Action', icon: imageData, style: NKButtonStyle.filled, onPressed: () {})
+```
+
+**From a PNG asset** (zero conversion overhead):
+
+```dart
+final imageData = await NKImageData.fromAsset(
+  'assets/images/logo.png',
+  devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+);
+```
+
+**From raw bytes:**
+
+```dart
+final imageData = NKImageData(pngBytes, scale: 3.0);
+```
+
+`NKImageData` works with: **NKIcon**, **NKButton**, **NKTabBar**, **NKPopupMenu**, **NKGlassButtonGroup**, **NKToast**.
+
 ## Example App
 
 ```bash
@@ -247,27 +577,44 @@ cd example
 flutter run
 ```
 
-The example app demonstrates all 7 components with interactive demos.
+The example app is organized into 4 tabs:
+
+| Tab | Content |
+|-----|---------|
+| **Controls** | NKSwitch, NKSlider, NKSegmentedControl, NKProgressView, NKDatePicker |
+| **Actions** | All 10 NKButton styles, icon-only buttons, NKPopupMenu, NKGlassButtonGroup |
+| **Glass** | NKGlassContainer, NKGlassCard, NKToast, NKIcon rendering modes, NKSlider ticks |
+| **Customize** | NKTheme toggle, custom fonts, NKToolbar demos (sub-screens), SVG image demo |
+
+The app uses NK components throughout — `NKToolbar` for the navigation bar, `NKTabBar` for bottom navigation, `NKGlassCard` for section cards, and `NKToast` for notifications.
 
 ## Architecture
 
 ```
 lib/
+  native_kit.dart      - Barrel exports
   src/
-    models/          - Shared NKSFSymbol model
-    utilities/       - Platform view mixin, platform builder
+    models/            - NKImageSource, NKSFSymbol, NKImageData, NKTextStyle, NKGlassStyle, NKTheme
+    utilities/         - NKFontLoader, platform view mixin, platform builder
     components/
-      nk_tab_bar/    - NKTabBar widget + item model
-      nk_switch/     - NKSwitch widget
-      nk_slider/     - NKSlider widget
-      nk_button/     - NKButton widget + style enum
-      nk_segmented_control/ - NKSegmentedControl widget
-      nk_icon/       - NKIcon widget + rendering mode enum
-      nk_popup_menu/ - NKPopupMenu widget + item model
+      nk_tab_bar/      - NKTabBar + NKTabBarItem
+      nk_switch/       - NKSwitch
+      nk_slider/       - NKSlider
+      nk_button/       - NKButton + style enum
+      nk_segmented_control/ - NKSegmentedControl
+      nk_icon/         - NKIcon + rendering mode enum
+      nk_popup_menu/   - NKPopupMenu + NKPopupMenuItem
+      nk_toolbar/      - NKToolbar + SliverNKToolbar
+      nk_progress_view/ - NKProgressView
+      nk_date_picker/  - NKDatePicker
+      nk_glass_container/ - NKGlassContainer
+      nk_glass_card/   - NKGlassCard
+      nk_glass_button_group/ - NKGlassButtonGroup
+      nk_toast/        - NKToast
 
 ios/Classes/
-  Utilities/         - Color + SF Symbol Swift helpers
-  Components/        - One factory + platform view per component
+  Utilities/           - Color, SF Symbol, Font Swift helpers
+  Components/          - One factory + platform view per component
 ```
 
 Each component uses per-view method channels (`native_kit/{component}_{viewId}`) for reliable multi-instance support.

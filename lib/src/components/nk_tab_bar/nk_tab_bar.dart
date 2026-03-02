@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../models/nk_text_style.dart';
+import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 import 'nk_tab_bar_item.dart';
 
@@ -60,6 +62,9 @@ class NKTabBar extends StatefulWidget {
   /// Whether the tab bar is visible.
   final bool isVisible;
 
+  /// Text style for tab item labels (font family, size, weight).
+  final NKTextStyle? textStyle;
+
   const NKTabBar({
     super.key,
     required this.items,
@@ -71,6 +76,7 @@ class NKTabBar extends StatefulWidget {
     this.unselectedItemColor,
     this.height,
     this.isVisible = true,
+    this.textStyle,
   });
 
   @override
@@ -105,18 +111,21 @@ class _NKTabBarState extends State<NKTabBar>
       'Only one custom button is allowed in NKTabBar. Found $customButtonCount custom buttons.',
     );
 
+    final theme = NKTheme.of(context);
     return SizedBox(
       height: (widget.height ?? 49.0) + MediaQuery.of(context).padding.bottom,
       child: UiKitView(
         viewType: 'native_kit/tab_bar_view',
-        creationParams: _buildCreationParams(),
+        creationParams: _buildCreationParams(theme),
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: onPlatformViewCreated,
       ),
     );
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveTextStyle = widget.textStyle ?? theme?.textStyle;
+
     return {
       'items': widget.items.map((item) => item.toMap()).toList(),
       'currentIndex': widget.currentIndex,
@@ -126,6 +135,7 @@ class _NKTabBarState extends State<NKTabBar>
         'selectedItemColor': widget.selectedItemColor!.toARGB32(),
       if (widget.unselectedItemColor != null)
         'unselectedItemColor': widget.unselectedItemColor!.toARGB32(),
+      if (effectiveTextStyle != null) 'textStyle': effectiveTextStyle.toMap(),
     };
   }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
+import '../../models/nk_text_style.dart';
+import '../../models/nk_theme.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
@@ -10,8 +12,8 @@ class NKToolbarItem {
   /// Optional text label.
   final String? label;
 
-  /// Optional SF Symbol icon.
-  final NKSFSymbol? icon;
+  /// Optional icon (SF Symbol or custom image).
+  final NKImageSource? icon;
 
   /// Called when the item is tapped.
   final VoidCallback? onPressed;
@@ -184,6 +186,9 @@ class NKToolbar extends StatefulWidget implements PreferredSizeWidget {
   /// added below the navigation bar title.
   final NKSearchBarConfig? searchBar;
 
+  /// Text style for the navigation bar title (font family, size, weight).
+  final NKTextStyle? titleTextStyle;
+
   const NKToolbar({
     super.key,
     this.title,
@@ -198,6 +203,7 @@ class NKToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.showSeparator = true,
     this.height = 44.0,
     this.searchBar,
+    this.titleTextStyle,
   });
 
   @override
@@ -254,6 +260,7 @@ class _NKToolbarState extends State<NKToolbar>
         oldWidget.appearance != widget.appearance ||
         oldWidget.showSeparator != widget.showSeparator ||
         oldWidget.backButtonTitle != widget.backButtonTitle ||
+        oldWidget.titleTextStyle != widget.titleTextStyle ||
         oldWidget.trailingItems.length != widget.trailingItems.length ||
         (oldWidget.onBackPressed == null) !=
             (widget.onBackPressed == null) ||
@@ -273,13 +280,17 @@ class _NKToolbarState extends State<NKToolbar>
 
   Future<void> _update() async {
     try {
-      await channel?.invokeMethod('update', _buildCreationParams());
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
     } catch (e) {
       debugPrint('NKToolbar: Failed to update: $e');
     }
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveTitleTextStyle = widget.titleTextStyle ?? theme?.textStyle;
+    final effectiveTintColor = widget.tintColor ?? theme?.tintColor;
+
     return {
       if (widget.title != null) 'title': widget.title,
       'prefersLargeTitles': widget.prefersLargeTitles,
@@ -290,18 +301,22 @@ class _NKToolbarState extends State<NKToolbar>
         'leadingItem': widget.leadingItem!.toMap(),
       'trailingItems':
           widget.trailingItems.reversed.map((item) => item.toMap()).toList(),
-      if (widget.tintColor != null) 'tintColor': widget.tintColor!.toARGB32(),
+      if (effectiveTintColor != null)
+        'tintColor': effectiveTintColor.toARGB32(),
       if (widget.backgroundColor != null)
         'backgroundColor': widget.backgroundColor!.toARGB32(),
       'appearance': widget.appearance.name,
       'showSeparator': widget.showSeparator,
       'height': widget.prefersLargeTitles ? 96.0 : widget.height,
       if (widget.searchBar != null) 'searchBar': widget.searchBar!.toMap(),
+      if (effectiveTitleTextStyle != null)
+        'titleTextStyle': effectiveTitleTextStyle.toMap(),
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = NKTheme.of(context);
     final topPadding = MediaQuery.paddingOf(context).top;
     final barHeight = widget.prefersLargeTitles ? 96.0 : widget.height;
     return Column(
@@ -313,7 +328,7 @@ class _NKToolbarState extends State<NKToolbar>
           child: NKPlatformBuilder(
             iosBuilder: (_) => UiKitView(
               viewType: 'native_kit/toolbar_view',
-              creationParams: _buildCreationParams(),
+              creationParams: _buildCreationParams(theme),
               creationParamsCodec: const StandardMessageCodec(),
               onPlatformViewCreated: onPlatformViewCreated,
               gestureRecognizers: eagerGestureRecognizers,
@@ -424,6 +439,9 @@ class SliverNKToolbar extends StatelessWidget {
   /// Optional search bar configuration.
   final NKSearchBarConfig? searchBar;
 
+  /// Text style for the navigation bar title (font family, size, weight).
+  final NKTextStyle? titleTextStyle;
+
   const SliverNKToolbar({
     super.key,
     this.title,
@@ -435,6 +453,7 @@ class SliverNKToolbar extends StatelessWidget {
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
     this.searchBar,
+    this.titleTextStyle,
   });
 
   @override
@@ -453,6 +472,7 @@ class SliverNKToolbar extends StatelessWidget {
         backgroundColor: backgroundColor,
         appearance: appearance,
         searchBar: searchBar,
+        titleTextStyle: titleTextStyle,
       ),
     );
   }
@@ -469,6 +489,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
   final Color? backgroundColor;
   final NKToolbarAppearance appearance;
   final NKSearchBarConfig? searchBar;
+  final NKTextStyle? titleTextStyle;
 
   static const _navBarHeight = 44.0;
   static const _largeTitleHeight = 52.0;
@@ -484,6 +505,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
     this.searchBar,
+    this.titleTextStyle,
   });
 
   @override
@@ -508,6 +530,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
       backgroundColor: backgroundColor,
       appearance: appearance,
       searchBar: searchBar,
+      titleTextStyle: titleTextStyle,
     );
   }
 
@@ -522,6 +545,7 @@ class _NKToolbarSliverDelegate extends SliverPersistentHeaderDelegate {
         backgroundColor != oldDelegate.backgroundColor ||
         appearance != oldDelegate.appearance ||
         searchBar != oldDelegate.searchBar ||
+        titleTextStyle != oldDelegate.titleTextStyle ||
         topPadding != oldDelegate.topPadding;
   }
 }
@@ -539,6 +563,7 @@ class _SliverNKToolbarContent extends StatefulWidget {
   final Color? backgroundColor;
   final NKToolbarAppearance appearance;
   final NKSearchBarConfig? searchBar;
+  final NKTextStyle? titleTextStyle;
 
   const _SliverNKToolbarContent({
     required this.shrinkOffset,
@@ -553,6 +578,7 @@ class _SliverNKToolbarContent extends StatefulWidget {
     this.backgroundColor,
     this.appearance = NKToolbarAppearance.defaultAppearance,
     this.searchBar,
+    this.titleTextStyle,
   });
 
   @override
@@ -630,13 +656,17 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
 
   Future<void> _updateNative() async {
     try {
-      await channel?.invokeMethod('update', _buildCreationParams());
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
     } catch (e) {
       debugPrint('SliverNKToolbar: Failed to update: $e');
     }
   }
 
-  Map<String, dynamic> _buildCreationParams() {
+  Map<String, dynamic> _buildCreationParams(NKThemeData? theme) {
+    final effectiveTitleTextStyle = widget.titleTextStyle ?? theme?.textStyle;
+    final effectiveTintColor = widget.tintColor ?? theme?.tintColor;
+
     return {
       // Only show native inline title when the large title is collapsed.
       if (widget.title != null && _showInlineTitle) 'title': widget.title,
@@ -648,14 +678,42 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
         'leadingItem': widget.leadingItem!.toMap(),
       'trailingItems':
           widget.trailingItems.reversed.map((item) => item.toMap()).toList(),
-      if (widget.tintColor != null) 'tintColor': widget.tintColor!.toARGB32(),
+      if (effectiveTintColor != null)
+        'tintColor': effectiveTintColor.toARGB32(),
       if (widget.backgroundColor != null)
         'backgroundColor': widget.backgroundColor!.toARGB32(),
       'appearance': widget.appearance.name,
       'showSeparator': false,
       'height': 44.0,
       if (widget.searchBar != null) 'searchBar': widget.searchBar!.toMap(),
+      if (effectiveTitleTextStyle != null)
+        'titleTextStyle': effectiveTitleTextStyle.toMap(),
     };
+  }
+
+  FontWeight _mapFontWeight(NKFontWeight? weight) {
+    switch (weight) {
+      case NKFontWeight.ultraLight:
+        return FontWeight.w100;
+      case NKFontWeight.thin:
+        return FontWeight.w200;
+      case NKFontWeight.light:
+        return FontWeight.w300;
+      case NKFontWeight.regular:
+        return FontWeight.w400;
+      case NKFontWeight.medium:
+        return FontWeight.w500;
+      case NKFontWeight.semibold:
+        return FontWeight.w600;
+      case NKFontWeight.bold:
+        return FontWeight.w700;
+      case NKFontWeight.heavy:
+        return FontWeight.w800;
+      case NKFontWeight.black:
+        return FontWeight.w900;
+      case null:
+        return FontWeight.bold;
+    }
   }
 
   @override
@@ -664,6 +722,7 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
     final largeTitleOpacity = (1.0 - progress * 1.5).clamp(0.0, 1.0);
     final largeTitleHeight = widget.maxShrink * (1.0 - progress);
 
+    final theme = NKTheme.of(context);
     return Container(
       color: CupertinoColors.systemBackground.resolveFrom(context),
       child: Column(
@@ -674,7 +733,7 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
             child: NKPlatformBuilder(
               iosBuilder: (_) => UiKitView(
                 viewType: 'native_kit/toolbar_view',
-                creationParams: _buildCreationParams(),
+                creationParams: _buildCreationParams(theme),
                 creationParamsCodec: const StandardMessageCodec(),
                 onPlatformViewCreated: onPlatformViewCreated,
                 gestureRecognizers: eagerGestureRecognizers,
@@ -693,8 +752,10 @@ class _SliverNKToolbarContentState extends State<_SliverNKToolbarContent>
                   child: Text(
                     widget.title ?? '',
                     style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.bold,
+                      fontSize: (widget.titleTextStyle ?? theme?.textStyle)?.fontSize ?? 34,
+                      fontWeight:
+                          _mapFontWeight((widget.titleTextStyle ?? theme?.textStyle)?.fontWeight),
+                      fontFamily: (widget.titleTextStyle ?? theme?.textStyle)?.fontFamily,
                       letterSpacing: 0.37,
                       color: CupertinoColors.label.resolveFrom(context),
                     ),

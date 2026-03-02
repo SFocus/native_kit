@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../models/nk_sf_symbol.dart';
+import '../../models/nk_image_source.dart';
 import '../../utilities/nk_platform_builder.dart';
 import '../../utilities/nk_platform_view_mixin.dart';
 
 /// Rendering mode for SF Symbols.
 ///
 /// Controls how colors are applied to multi-layer SF Symbols.
+/// Only applies when the [NKIcon.source] is an [NKSFSymbol].
+/// Ignored for [NKImageData] sources.
 enum NKSymbolRenderingMode {
   /// Single color applied to all layers.
   monochrome,
@@ -21,33 +23,40 @@ enum NKSymbolRenderingMode {
   multicolor,
 }
 
-/// A native iOS SF Symbol icon widget.
+/// A native iOS icon widget that displays SF Symbols or custom images.
 ///
 /// Uses UIKit's UIImageView on iOS to render SF Symbols with full support
 /// for rendering modes (monochrome, hierarchical, palette, multicolor).
+/// Also supports custom raster images via [NKImageData].
 /// Falls back to a basic Flutter Icon on other platforms.
 ///
 /// Example:
 /// ```dart
 /// NKIcon(
-///   symbol: NKSFSymbols.heart,
+///   source: NKSFSymbols.heart,
 ///   size: 32.0,
 ///   color: Colors.red,
 /// )
 ///
 /// // Palette rendering with multiple colors
 /// NKIcon(
-///   symbol: NKSFSymbol('cloud.sun.rain.fill'),
+///   source: NKSFSymbol('cloud.sun.rain.fill'),
 ///   size: 48.0,
 ///   mode: NKSymbolRenderingMode.palette,
 ///   color: Colors.blue,
 ///   secondaryColor: Colors.yellow,
 ///   tertiaryColor: Colors.grey,
 /// )
+///
+/// // Custom raster image
+/// NKIcon(
+///   source: NKImageData(pngBytes, scale: 3.0),
+///   size: 32.0,
+/// )
 /// ```
 class NKIcon extends StatefulWidget {
-  /// The SF Symbol to display.
-  final NKSFSymbol symbol;
+  /// The image source to display (SF Symbol or raster image).
+  final NKImageSource source;
 
   /// The size of the icon in logical pixels.
   final double size;
@@ -56,6 +65,8 @@ class NKIcon extends StatefulWidget {
   final Color? color;
 
   /// The rendering mode for the SF Symbol.
+  ///
+  /// Only applies when [source] is an [NKSFSymbol]. Ignored for [NKImageData].
   final NKSymbolRenderingMode mode;
 
   /// The secondary color (used in palette rendering mode).
@@ -66,7 +77,7 @@ class NKIcon extends StatefulWidget {
 
   const NKIcon({
     super.key,
-    required this.symbol,
+    required this.source,
     this.size = 24.0,
     this.color,
     this.mode = NKSymbolRenderingMode.monochrome,
@@ -91,7 +102,7 @@ class _NKIconState extends State<NKIcon> with NKPlatformViewMixin<NKIcon> {
   void didUpdateWidget(NKIcon oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.symbol != widget.symbol ||
+    if (oldWidget.source != widget.source ||
         oldWidget.size != widget.size ||
         oldWidget.color != widget.color ||
         oldWidget.mode != widget.mode ||
@@ -111,7 +122,7 @@ class _NKIconState extends State<NKIcon> with NKPlatformViewMixin<NKIcon> {
 
   Map<String, dynamic> _buildCreationParams() {
     return {
-      'symbol': widget.symbol.toMap(),
+      'source': widget.source.toMap(),
       'size': widget.size,
       if (widget.color != null) 'color': widget.color!.toARGB32(),
       'mode': widget.mode.name,

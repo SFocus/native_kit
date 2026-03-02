@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'nk_image_source.dart';
 
 /// SF Symbol icon representation shared across all NK components.
 ///
 /// Use SF Symbol names like 'house', 'magnifyingglass', 'person', etc.
 /// Browse all symbols at: https://developer.apple.com/sf-symbols/
 @immutable
-class NKSFSymbol {
+class NKSFSymbol extends NKImageSource {
   /// The SF Symbol name.
   final String name;
 
@@ -18,6 +19,7 @@ class NKSFSymbol {
   });
 
   /// Converts the symbol to a map for platform channel communication.
+  @override
   Map<String, dynamic> toMap() {
     return {
       'type': 'sf_symbol',

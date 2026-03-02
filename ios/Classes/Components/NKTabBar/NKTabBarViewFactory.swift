@@ -41,6 +41,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private var bgColor: UIColor?
     private var selectedItemColor: UIColor?
     private var unselectedItemColor: UIColor?
+    private var textStyleDict: [String: Any]?
 
     init(
         frame: CGRect,
@@ -81,6 +82,7 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         if let color = arguments["unselectedItemColor"] as? Int64 {
             self.unselectedItemColor = UIColor.fromARGB(color)
         }
+        self.textStyleDict = arguments["textStyle"] as? [String: Any]
     }
 
     private func setupTabBar() {
@@ -115,6 +117,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             if let unselectedColor = unselectedItemColor {
                 tabBar.unselectedItemTintColor = unselectedColor
             }
+
+            // Apply text style via appearance on iOS 26+
+            if let font = NKFontUtils.font(from: textStyleDict, defaultSize: 10.0) {
+                let appearance = tabBar.standardAppearance
+                appearance.stackedLayoutAppearance.normal.titleTextAttributes[.font] = font
+                appearance.stackedLayoutAppearance.selected.titleTextAttributes[.font] = font
+                tabBar.standardAppearance = appearance
+            }
             return
         }
 
@@ -125,20 +135,27 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             appearance.backgroundColor = bgColor
         }
 
+        // Build font from text style
+        let font = NKFontUtils.font(from: textStyleDict, defaultSize: 10.0)
+
         if let selectedColor = selectedItemColor {
-            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
-                .foregroundColor: selectedColor
-            ]
+            var attrs: [NSAttributedString.Key: Any] = [.foregroundColor: selectedColor]
+            if let font { attrs[.font] = font }
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = attrs
             appearance.stackedLayoutAppearance.selected.iconColor = selectedColor
             tabBar.tintColor = selectedColor
+        } else if let font {
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.font: font]
         }
 
         if let unselectedColor = unselectedItemColor {
-            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
-                .foregroundColor: unselectedColor
-            ]
+            var attrs: [NSAttributedString.Key: Any] = [.foregroundColor: unselectedColor]
+            if let font { attrs[.font] = font }
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = attrs
             appearance.stackedLayoutAppearance.normal.iconColor = unselectedColor
             tabBar.unselectedItemTintColor = unselectedColor
+        } else if let font {
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.font: font]
         }
 
         tabBar.standardAppearance = appearance
@@ -157,13 +174,8 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private func createTabBarItem(from data: TabItemData, at index: Int) -> UITabBarItem {
         let item: UITabBarItem
 
-        let image: UIImage? = data.iconName.flatMap { name in
-            NKSymbolUtils.createImage(name: name, config: data.iconConfig)
-        }
-
-        let selectedImage: UIImage? = data.selectedIconName.flatMap { name in
-            NKSymbolUtils.createImage(name: name, config: data.selectedIconConfig)
-        }
+        let image = NKSymbolUtils.createImageFromSource(data.iconDict)
+        let selectedImage = NKSymbolUtils.createImageFromSource(data.selectedIconDict)
 
         if data.isCustomButton {
             item = UITabBarItem(tabBarSystemItem: .search, tag: index)
@@ -269,10 +281,8 @@ extension NKTabBarPlatformView: UITabBarDelegate {
 @available(iOS 18.0, *)
 struct TabItemData {
     let title: String
-    let iconName: String?
-    let iconConfig: [String: Any]?
-    let selectedIconName: String?
-    let selectedIconConfig: [String: Any]?
+    let iconDict: [String: Any]?
+    let selectedIconDict: [String: Any]?
     var badge: String?
     let isCustomButton: Bool
 
@@ -280,21 +290,7 @@ struct TabItemData {
         self.title = dict["title"] as? String ?? ""
         self.badge = dict["badge"] as? String
         self.isCustomButton = dict["isCustomButton"] as? Bool ?? false
-
-        if let parsed = NKSymbolUtils.parseIcon(from: dict["icon"] as? [String: Any]) {
-            self.iconName = parsed.name
-            self.iconConfig = parsed.config
-        } else {
-            self.iconName = nil
-            self.iconConfig = nil
-        }
-
-        if let parsed = NKSymbolUtils.parseIcon(from: dict["selectedIcon"] as? [String: Any]) {
-            self.selectedIconName = parsed.name
-            self.selectedIconConfig = parsed.config
-        } else {
-            self.selectedIconName = nil
-            self.selectedIconConfig = nil
-        }
+        self.iconDict = dict["icon"] as? [String: Any]
+        self.selectedIconDict = dict["selectedIcon"] as? [String: Any]
     }
 }

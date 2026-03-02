@@ -38,6 +38,8 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     private var button: UIButton!
     private var currentStyle: String = "filled"
     private var tintColor: UIColor?
+    private var textStyleDict: [String: Any]?
+    private var cornerRadius: CGFloat?
 
     init(
         frame: CGRect,
@@ -50,6 +52,7 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
             binaryMessenger: registrar.messenger()
         )
         self.container = UIView(frame: frame)
+        self.container.backgroundColor = .clear
         super.init()
 
         channel.setMethodCallHandler { [weak self] call, result in
@@ -86,11 +89,8 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
         }
 
         if let iconData = iconData,
-           let parsed = NKSymbolUtils.parseIcon(from: iconData) {
-            configuration.image = NKSymbolUtils.createImage(
-                name: parsed.name,
-                config: parsed.config
-            )
+           let image = NKSymbolUtils.createImageFromSource(iconData) {
+            configuration.image = image
             configuration.imagePadding = label != nil ? 6 : 0
         }
 
@@ -98,14 +98,18 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
             configuration.baseForegroundColor = tintColor
         }
 
+        // Text style
+        self.textStyleDict = arguments["textStyle"] as? [String: Any]
+        applyTextStyle(to: &configuration)
+
+        // Corner radius
+        self.cornerRadius = arguments["cornerRadius"] as? CGFloat
+        applyCornerRadius(to: &configuration, style: styleName)
+
         button = UIButton(configuration: configuration)
         button.isEnabled = enabled
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
-
-        if let tintColor = self.tintColor {
-            button.tintColor = tintColor
-        }
 
         container.addSubview(button)
         NSLayoutConstraint.activate([
@@ -165,7 +169,23 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
                 newConfig.baseForegroundColor = tintColor
             }
 
+            applyTextStyle(to: &newConfig)
+            applyCornerRadius(to: &newConfig, style: styleName)
+
             button.configuration = newConfig
+            result(nil)
+
+        case "updateStyling":
+            self.textStyleDict = args["textStyle"] as? [String: Any]
+            if let cr = args["cornerRadius"] as? CGFloat {
+                self.cornerRadius = cr
+            }
+
+            if var config = button.configuration {
+                applyTextStyle(to: &config)
+                applyCornerRadius(to: &config, style: currentStyle)
+                button.configuration = config
+            }
             result(nil)
 
         default:
@@ -174,6 +194,30 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     }
 
     // MARK: - Helpers
+
+    private func applyCornerRadius(to configuration: inout UIButton.Configuration, style: String) {
+        guard let cornerRadius = self.cornerRadius else { return }
+        if #available(iOS 26.0, *) {
+            // On iOS 26+, avoid mutating configuration.background for non-glass
+            // styles — it prevents the automatic liquid glass treatment.
+            let glassStyles: Set<String> = ["glass", "clearGlass", "prominentGlass", "prominentClearGlass"]
+            if glassStyles.contains(style) {
+                configuration.background.cornerRadius = cornerRadius
+            }
+        } else {
+            configuration.background.cornerRadius = cornerRadius
+        }
+    }
+
+    private func applyTextStyle(to configuration: inout UIButton.Configuration) {
+        if let font = NKFontUtils.font(from: textStyleDict) {
+            configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = font
+                return outgoing
+            }
+        }
+    }
 
     private static func makeConfiguration(for styleName: String) -> UIButton.Configuration {
         switch styleName {

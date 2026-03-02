@@ -104,11 +104,7 @@ final class NKPopupMenuPlatformView: NSObject, FlutterPlatformView {
 
         // Set button icon
         if let iconDict = params["buttonIcon"] as? [String: Any],
-           let parsed = NKSymbolUtils.parseIcon(from: iconDict) {
-            let image = NKSymbolUtils.createImage(
-                name: parsed.name,
-                config: parsed.config
-            )
+           let image = NKSymbolUtils.createImageFromSource(iconDict) {
             config.image = image
             config.imagePadding = 4
         }
@@ -154,9 +150,8 @@ final class NKPopupMenuPlatformView: NSObject, FlutterPlatformView {
 
         // Parse optional icon
         var image: UIImage? = nil
-        if let iconDict = data["icon"] as? [String: Any],
-           let parsed = NKSymbolUtils.parseIcon(from: iconDict) {
-            image = NKSymbolUtils.createImage(name: parsed.name, config: parsed.config)
+        if let iconDict = data["icon"] as? [String: Any] {
+            image = NKSymbolUtils.createImageFromSource(iconDict)
         }
 
         // Determine attributes

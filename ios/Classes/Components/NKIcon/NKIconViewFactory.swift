@@ -65,10 +65,21 @@ final class NKIconPlatformView: NSObject, FlutterPlatformView {
     }
 
     private func applyParams(_ params: [String: Any]) {
-        guard let symbolDict = params["symbol"] as? [String: Any],
-              let parsed = NKSymbolUtils.parseIcon(from: symbolDict) else {
+        guard let sourceDict = params["source"] as? [String: Any],
+              let type = sourceDict["type"] as? String else {
             return
         }
+
+        // For image_data, create UIImage directly (no rendering modes)
+        if type == "image_data" {
+            if let image = NKSymbolUtils.createImageFromSource(sourceDict) {
+                imageView.image = image
+            }
+            return
+        }
+
+        // SF Symbol path — full rendering mode support
+        guard let parsed = NKSymbolUtils.parseIcon(from: sourceDict) else { return }
 
         let pointSize = params["size"] as? Double ?? 24.0
         let modeString = params["mode"] as? String ?? "monochrome"

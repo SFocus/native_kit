@@ -112,6 +112,8 @@ final class NKProgressViewPlatformView: NSObject, FlutterPlatformView {
             bar.trackTintColor = UIColor.fromARGB(track)
         }
 
+        applyCornerRadius(to: bar, params: params)
+
         return bar
     }
 
@@ -126,6 +128,19 @@ final class NKProgressViewPlatformView: NSObject, FlutterPlatformView {
         }
         if let track = params["trackColor"] as? Int64 {
             bar.trackTintColor = UIColor.fromARGB(track)
+        }
+
+        applyCornerRadius(to: bar, params: params)
+    }
+
+    private func applyCornerRadius(to bar: UIProgressView, params: [String: Any]) {
+        if let cornerRadius = params["cornerRadius"] as? CGFloat {
+            bar.layer.cornerRadius = cornerRadius
+            bar.clipsToBounds = true
+            bar.subviews.forEach {
+                $0.layer.cornerRadius = cornerRadius
+                $0.clipsToBounds = true
+            }
         }
     }
 

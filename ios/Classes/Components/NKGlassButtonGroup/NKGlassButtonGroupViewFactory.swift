@@ -112,11 +112,8 @@ final class NKGlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
             }
 
             if let iconData = buttonData["icon"] as? [String: Any],
-               let parsed = NKSymbolUtils.parseIcon(from: iconData) {
-                button.configuration?.image = NKSymbolUtils.createImage(
-                    name: parsed.name,
-                    config: parsed.config
-                )
+               let image = NKSymbolUtils.createImageFromSource(iconData) {
+                button.configuration?.image = image
                 let hasLabel = buttonData["label"] as? String != nil
                 button.configuration?.imagePadding = hasLabel ? 6 : 0
             }
