@@ -34,7 +34,7 @@ import UIKit
 @available(iOS 18.0, *)
 final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     private let channel: FlutterMethodChannel
-    private let container: UIView
+    private let container: NKTabBarContainerView
     private var tabBar: UITabBar?
     private var selectedIndex: Int = 0
     private var items: [TabItemData] = []
@@ -53,9 +53,10 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
             name: "native_kit/tab_bar_\(viewId)",
             binaryMessenger: registrar.messenger()
         )
-        self.container = UIView(frame: frame)
+        self.container = NKTabBarContainerView(frame: frame)
         self.container.backgroundColor = .clear
         super.init()
+        self.container.platformView = self
 
         channel.setMethodCallHandler { [weak self] call, result in
             self?.handleMethodCall(call, result: result)
@@ -106,6 +107,11 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
     }
 
     private func configureAppearance(_ tabBar: UITabBar) {
+        // Reset direct color properties so stale values don't persist
+        // when colors are removed or when iOS alters them during transitions.
+        tabBar.tintColor = nil
+        tabBar.unselectedItemTintColor = nil
+
         // On iOS 26+, skip custom appearance to let Liquid Glass apply automatically.
         // Only set explicit colors if provided.
         if #available(iOS 26.0, *) {
@@ -206,6 +212,13 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         return item
     }
 
+    /// Re-applies the current appearance to the tab bar.
+    /// Called by the container view when it returns to a window after navigation.
+    func reapplyAppearance() {
+        guard let tabBar = self.tabBar else { return }
+        configureAppearance(tabBar)
+    }
+
     func setSelectedIndex(_ index: Int) {
         selectedIndex = index
         guard let items = tabBar?.items, items.indices.contains(index) else { return }
@@ -225,6 +238,35 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         }
 
         switch call.method {
+        case "update":
+            // Re-parse all params
+            let itemsData = args["items"] as? [[String: Any]] ?? []
+            self.items = itemsData.map { TabItemData(from: $0) }
+            self.selectedIndex = args["currentIndex"] as? Int ?? 0
+
+            // Reset colors before re-applying so removed colors clear properly
+            self.bgColor = nil
+            self.selectedItemColor = nil
+            self.unselectedItemColor = nil
+
+            if let color = args["backgroundColor"] as? Int64 {
+                self.bgColor = UIColor.fromARGB(color)
+            }
+            if let color = args["selectedItemColor"] as? Int64 {
+                self.selectedItemColor = UIColor.fromARGB(color)
+            }
+            if let color = args["unselectedItemColor"] as? Int64 {
+                self.unselectedItemColor = UIColor.fromARGB(color)
+            }
+            self.textStyleDict = args["textStyle"] as? [String: Any]
+
+            // Rebuild appearance and items on the existing tab bar
+            if let tabBar = self.tabBar {
+                configureAppearance(tabBar)
+                configureItems(tabBar)
+            }
+            result(nil)
+
         case "setSelectedIndex":
             guard let index = args["index"] as? Int else {
                 result(FlutterError(code: "INVALID_INDEX", message: "Invalid index", details: nil))
@@ -280,6 +322,23 @@ extension NKTabBarPlatformView: UITabBarDelegate {
 
         selectedIndex = index
         channel.invokeMethod("onTabSelected", arguments: index)
+    }
+}
+
+// MARK: - Container View
+
+/// Custom container that re-applies tab bar appearance when the view
+/// comes back into view (e.g., after a pushed route is popped).
+/// iOS may alter tintColor/appearance during navigation transitions.
+@available(iOS 18.0, *)
+private class NKTabBarContainerView: UIView {
+    weak var platformView: NKTabBarPlatformView?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            platformView?.reapplyAppearance()
+        }
     }
 }
 

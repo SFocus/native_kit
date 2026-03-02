@@ -130,6 +130,14 @@ class _NKSliderState extends State<NKSlider>
   void didUpdateWidget(NKSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (oldWidget.activeColor != widget.activeColor ||
+        oldWidget.inactiveColor != widget.inactiveColor ||
+        oldWidget.thumbColor != widget.thumbColor ||
+        oldWidget.step != widget.step) {
+      _update();
+      return;
+    }
+
     if (oldWidget.value != widget.value) {
       _setValue(widget.value);
     }
@@ -146,6 +154,14 @@ class _NKSliderState extends State<NKSlider>
         oldWidget.neutralValue != widget.neutralValue ||
         oldWidget.enabledRange != widget.enabledRange) {
       _setTrackConfiguration();
+    }
+  }
+
+  Future<void> _update() async {
+    try {
+      await channel?.invokeMethod('update', _buildCreationParams());
+    } catch (e) {
+      debugPrint('NKSlider: Failed to update: $e');
     }
   }
 

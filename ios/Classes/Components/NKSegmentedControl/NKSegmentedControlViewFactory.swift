@@ -143,6 +143,38 @@ final class NKSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         }
 
         switch call.method {
+        case "update":
+            let labels = args["labels"] as? [String] ?? []
+            let iconsData = args["icons"] as? [Any?]
+            let selectedIndex = args["selectedIndex"] as? Int ?? 0
+            let enabled = args["enabled"] as? Bool ?? true
+
+            segmentedControl.removeAllSegments()
+
+            for (index, label) in labels.enumerated() {
+                segmentedControl.insertSegment(withTitle: label, at: index, animated: false)
+                if let iconsData = iconsData,
+                   index < iconsData.count,
+                   let iconDict = iconsData[index] as? [String: Any],
+                   let image = NKSymbolUtils.createImageFromSource(iconDict) {
+                    segmentedControl.setImage(image.withRenderingMode(.alwaysTemplate), forSegmentAt: index)
+                }
+            }
+
+            if labels.indices.contains(selectedIndex) {
+                segmentedControl.selectedSegmentIndex = selectedIndex
+            }
+            segmentedControl.isEnabled = enabled
+
+            if let colorValue = args["tintColor"] as? Int64 {
+                segmentedControl.selectedSegmentTintColor = UIColor.fromARGB(colorValue)
+            } else {
+                segmentedControl.selectedSegmentTintColor = nil
+            }
+
+            applyStyling(args)
+            result(nil)
+
         case "setSelectedIndex":
             guard let index = args["index"] as? Int else {
                 result(FlutterError(code: "INVALID_ARGS", message: "Expected 'index' int", details: nil))

@@ -144,53 +144,24 @@ class _NKButtonState extends State<NKButton>
   void didUpdateWidget(NKButton oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.enabled != widget.enabled) {
-      _setEnabled(widget.enabled);
-    }
-    if (oldWidget.label != widget.label) {
-      _setLabel(widget.label);
-    }
-    if (oldWidget.style != widget.style) {
-      _setStyle(widget.style);
-    }
-    if (oldWidget.textStyle != widget.textStyle ||
+    if (oldWidget.enabled != widget.enabled ||
+        oldWidget.label != widget.label ||
+        oldWidget.icon != widget.icon ||
+        oldWidget.style != widget.style ||
+        oldWidget.tintColor != widget.tintColor ||
+        oldWidget.height != widget.height ||
+        oldWidget.textStyle != widget.textStyle ||
         oldWidget.cornerRadius != widget.cornerRadius) {
-      _updateStyling();
+      _update();
     }
   }
 
-  Future<void> _setEnabled(bool enabled) async {
+  Future<void> _update() async {
     try {
-      await channel?.invokeMethod('setEnabled', {'enabled': enabled});
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
     } catch (e) {
-      debugPrint('NKButton: Failed to set enabled: $e');
-    }
-  }
-
-  Future<void> _setLabel(String? label) async {
-    try {
-      await channel?.invokeMethod('setLabel', {'label': label});
-    } catch (e) {
-      debugPrint('NKButton: Failed to set label: $e');
-    }
-  }
-
-  Future<void> _setStyle(NKButtonStyle style) async {
-    try {
-      await channel?.invokeMethod('setStyle', {'style': style.name});
-    } catch (e) {
-      debugPrint('NKButton: Failed to set style: $e');
-    }
-  }
-
-  Future<void> _updateStyling() async {
-    try {
-      await channel?.invokeMethod('updateStyling', {
-        if (widget.textStyle != null) 'textStyle': widget.textStyle!.toMap(),
-        if (widget.cornerRadius != null) 'cornerRadius': widget.cornerRadius,
-      });
-    } catch (e) {
-      debugPrint('NKButton: Failed to update styling: $e');
+      debugPrint('NKButton: Failed to update: $e');
     }
   }
 

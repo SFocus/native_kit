@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 
 import '../../models/nk_image_source.dart';
@@ -97,15 +98,29 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
   void didUpdateWidget(NKSegmentedControl oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (!listEquals(oldWidget.labels, widget.labels) ||
+        !listEquals(oldWidget.icons, widget.icons) ||
+        oldWidget.tintColor != widget.tintColor ||
+        oldWidget.textStyle != widget.textStyle ||
+        oldWidget.cornerRadius != widget.cornerRadius) {
+      _update();
+      return;
+    }
+
     if (oldWidget.selectedIndex != widget.selectedIndex) {
       _setSelectedIndex(widget.selectedIndex);
     }
     if (oldWidget.enabled != widget.enabled) {
       _setEnabled(widget.enabled);
     }
-    if (oldWidget.textStyle != widget.textStyle ||
-        oldWidget.cornerRadius != widget.cornerRadius) {
-      _updateStyling();
+  }
+
+  Future<void> _update() async {
+    try {
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
+    } catch (e) {
+      debugPrint('NKSegmentedControl: Failed to update: $e');
     }
   }
 
@@ -122,17 +137,6 @@ class _NKSegmentedControlState extends State<NKSegmentedControl>
       await channel?.invokeMethod('setEnabled', {'enabled': enabled});
     } catch (e) {
       debugPrint('NKSegmentedControl: Failed to set enabled: $e');
-    }
-  }
-
-  Future<void> _updateStyling() async {
-    try {
-      await channel?.invokeMethod('updateStyling', {
-        if (widget.textStyle != null) 'textStyle': widget.textStyle!.toMap(),
-        if (widget.cornerRadius != null) 'cornerRadius': widget.cornerRadius,
-      });
-    } catch (e) {
-      debugPrint('NKSegmentedControl: Failed to update styling: $e');
     }
   }
 

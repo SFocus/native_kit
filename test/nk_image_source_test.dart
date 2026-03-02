@@ -74,21 +74,25 @@ void main() {
       expect(map['scale'], 1.0);
     });
 
-    test('equality based on bytes length and scale', () {
+    test('equality based on bytes content and scale', () {
       final a = NKImageData(Uint8List.fromList([1, 2, 3]), scale: 2.0);
-      final b = NKImageData(Uint8List.fromList([4, 5, 6]), scale: 2.0);
-      final c = NKImageData(Uint8List.fromList([1, 2, 3, 4]), scale: 2.0);
-      final d = NKImageData(Uint8List.fromList([1, 2, 3]), scale: 3.0);
+      final b = NKImageData(Uint8List.fromList([1, 2, 3]), scale: 2.0);
+      final c = NKImageData(Uint8List.fromList([4, 5, 6]), scale: 2.0);
+      final d = NKImageData(Uint8List.fromList([1, 2, 3, 4]), scale: 2.0);
+      final e = NKImageData(Uint8List.fromList([1, 2, 3]), scale: 3.0);
 
-      // Same length and scale → equal
+      // Same content and scale → equal
       expect(a, equals(b));
       expect(a.hashCode, equals(b.hashCode));
 
-      // Different length → not equal
+      // Different content (same length) → not equal
       expect(a, isNot(equals(c)));
 
-      // Different scale → not equal
+      // Different length → not equal
       expect(a, isNot(equals(d)));
+
+      // Different scale → not equal
+      expect(a, isNot(equals(e)));
     });
   });
 

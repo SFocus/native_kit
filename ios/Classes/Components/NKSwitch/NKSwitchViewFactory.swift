@@ -66,6 +66,14 @@ final class NKSwitchPlatformView: NSObject, FlutterPlatformView {
 
         uiSwitch.isOn = arguments["value"] as? Bool ?? false
         uiSwitch.isEnabled = arguments["enabled"] as? Bool ?? true
+        applyColors(arguments)
+    }
+
+    private func applyColors(_ arguments: [String: Any]) {
+        uiSwitch.onTintColor = nil
+        uiSwitch.backgroundColor = .clear
+        uiSwitch.layer.cornerRadius = 0
+        uiSwitch.thumbTintColor = nil
 
         if let color = arguments["activeColor"] as? Int64 {
             uiSwitch.onTintColor = UIColor.fromARGB(color)
@@ -101,6 +109,12 @@ final class NKSwitchPlatformView: NSObject, FlutterPlatformView {
         }
 
         switch call.method {
+        case "update":
+            uiSwitch.setOn(args["value"] as? Bool ?? uiSwitch.isOn, animated: false)
+            uiSwitch.isEnabled = args["enabled"] as? Bool ?? uiSwitch.isEnabled
+            applyColors(args)
+            result(nil)
+
         case "setValue":
             let value = args["value"] as? Bool ?? false
             let animated = args["animated"] as? Bool ?? true

@@ -65,11 +65,26 @@ class _NKSwitchState extends State<NKSwitch>
   void didUpdateWidget(NKSwitch oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (oldWidget.activeColor != widget.activeColor ||
+        oldWidget.trackColor != widget.trackColor ||
+        oldWidget.thumbColor != widget.thumbColor) {
+      _update();
+      return;
+    }
+
     if (oldWidget.value != widget.value) {
       _setValue(widget.value);
     }
     if (oldWidget.enabled != widget.enabled) {
       _setEnabled(widget.enabled);
+    }
+  }
+
+  Future<void> _update() async {
+    try {
+      await channel?.invokeMethod('update', _buildCreationParams());
+    } catch (e) {
+      debugPrint('NKSwitch: Failed to update: $e');
     }
   }
 

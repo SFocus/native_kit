@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -158,11 +159,12 @@ class NKImageData extends NKImageSource {
       identical(this, other) ||
       other is NKImageData &&
           runtimeType == other.runtimeType &&
-          bytes.length == other.bytes.length &&
+          listEquals(bytes, other.bytes) &&
           scale == other.scale &&
           renderingMode == other.renderingMode &&
           tintColor == other.tintColor;
 
   @override
-  int get hashCode => Object.hash(bytes.length, scale, renderingMode, tintColor);
+  int get hashCode =>
+      Object.hash(Object.hashAll(bytes), scale, renderingMode, tintColor);
 }

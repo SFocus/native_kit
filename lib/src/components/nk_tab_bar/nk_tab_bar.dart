@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/nk_text_style.dart';
@@ -143,6 +144,15 @@ class _NKTabBarState extends State<NKTabBar>
   void didUpdateWidget(NKTabBar oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    if (!listEquals(oldWidget.items, widget.items) ||
+        oldWidget.backgroundColor != widget.backgroundColor ||
+        oldWidget.selectedItemColor != widget.selectedItemColor ||
+        oldWidget.unselectedItemColor != widget.unselectedItemColor ||
+        oldWidget.textStyle != widget.textStyle) {
+      _update();
+      return;
+    }
+
     if (oldWidget.currentIndex != widget.currentIndex) {
       _updateSelectedIndex(widget.currentIndex);
     }
@@ -152,6 +162,15 @@ class _NKTabBarState extends State<NKTabBar>
     }
 
     _updateBadgesIfNeeded(oldWidget);
+  }
+
+  Future<void> _update() async {
+    try {
+      final theme = context.mounted ? NKTheme.of(context) : null;
+      await channel?.invokeMethod('update', _buildCreationParams(theme));
+    } catch (e) {
+      debugPrint('NKTabBar: Failed to update: $e');
+    }
   }
 
   void _updateBadgesIfNeeded(NKTabBar oldWidget) {

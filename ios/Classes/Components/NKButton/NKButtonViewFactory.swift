@@ -40,6 +40,7 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
     private var tintColor: UIColor?
     private var textStyleDict: [String: Any]?
     private var cornerRadius: CGFloat?
+    private var heightConstraint: NSLayoutConstraint?
 
     init(
         frame: CGRect,
@@ -111,13 +112,16 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(buttonPressed), for: .touchUpInside)
 
+        let hc = button.heightAnchor.constraint(equalToConstant: height)
+        heightConstraint = hc
+
         container.addSubview(button)
         NSLayoutConstraint.activate([
             button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             button.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             button.topAnchor.constraint(equalTo: container.topAnchor),
             button.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            button.heightAnchor.constraint(equalToConstant: height),
+            hc,
         ])
     }
 
@@ -136,6 +140,51 @@ final class NKButtonPlatformView: NSObject, FlutterPlatformView {
         }
 
         switch call.method {
+        case "update":
+            let label = args["label"] as? String
+            let iconData = args["icon"] as? [String: Any]
+            let styleName = args["style"] as? String ?? currentStyle
+            let enabled = args["enabled"] as? Bool ?? true
+            let height = args["height"] as? CGFloat ?? 44.0
+
+            if let colorValue = args["tintColor"] as? Int64 {
+                self.tintColor = UIColor.fromARGB(colorValue)
+            } else {
+                self.tintColor = nil
+            }
+
+            self.textStyleDict = args["textStyle"] as? [String: Any]
+            self.cornerRadius = args["cornerRadius"] as? CGFloat
+
+            var configuration: UIButton.Configuration
+            if styleName != currentStyle {
+                currentStyle = styleName
+                configuration = Self.makeConfiguration(for: styleName)
+            } else {
+                configuration = button.configuration ?? Self.makeConfiguration(for: styleName)
+            }
+
+            configuration.title = label
+            if let iconData = iconData,
+               let image = NKSymbolUtils.createImageFromSource(iconData) {
+                configuration.image = image
+                configuration.imagePadding = label != nil ? 6 : 0
+            } else {
+                configuration.image = nil
+                configuration.imagePadding = 0
+            }
+            if let tintColor = self.tintColor {
+                configuration.baseForegroundColor = tintColor
+            } else {
+                configuration.baseForegroundColor = nil
+            }
+            applyTextStyle(to: &configuration)
+            applyCornerRadius(to: &configuration, style: styleName)
+            button.configuration = configuration
+            button.isEnabled = enabled
+            heightConstraint?.constant = height
+            result(nil)
+
         case "setEnabled":
             guard let enabled = args["enabled"] as? Bool else {
                 result(FlutterError(code: "INVALID_ARGS", message: "Expected 'enabled' bool", details: nil))

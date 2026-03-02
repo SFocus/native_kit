@@ -74,9 +74,18 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         slider.value = Float(value)
         slider.isEnabled = arguments["enabled"] as? Bool ?? true
 
-        if let stepValue = arguments["step"] as? Double {
-            self.step = Float(stepValue)
+        applyStep(arguments)
+        applyColors(arguments)
+
+        if #available(iOS 26.0, *) {
+            configureTrack(from: arguments)
         }
+    }
+
+    private func applyColors(_ arguments: [String: Any]) {
+        slider.minimumTrackTintColor = nil
+        slider.maximumTrackTintColor = nil
+        slider.thumbTintColor = nil
 
         if let color = arguments["activeColor"] as? Int64 {
             slider.minimumTrackTintColor = UIColor.fromARGB(color)
@@ -87,9 +96,13 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         if let color = arguments["thumbColor"] as? Int64 {
             slider.thumbTintColor = UIColor.fromARGB(color)
         }
+    }
 
-        if #available(iOS 26.0, *) {
-            configureTrack(from: arguments)
+    private func applyStep(_ arguments: [String: Any]) {
+        if let stepValue = arguments["step"] as? Double {
+            self.step = Float(stepValue)
+        } else {
+            self.step = nil
         }
     }
 
@@ -173,6 +186,21 @@ final class NKSliderPlatformView: NSObject, FlutterPlatformView {
         }
 
         switch call.method {
+        case "update":
+            let min = Float(args["min"] as? Double ?? Double(slider.minimumValue))
+            let max = Float(args["max"] as? Double ?? Double(slider.maximumValue))
+            slider.minimumValue = min
+            slider.maximumValue = max
+            let value = Float(args["value"] as? Double ?? Double(slider.value))
+            slider.setValue(snappedValue(value), animated: false)
+            slider.isEnabled = args["enabled"] as? Bool ?? slider.isEnabled
+            applyColors(args)
+            applyStep(args)
+            if #available(iOS 26.0, *) {
+                configureTrack(from: args)
+            }
+            result(nil)
+
         case "setValue":
             let value = Float(args["value"] as? Double ?? 0.0)
             let animated = args["animated"] as? Bool ?? true
