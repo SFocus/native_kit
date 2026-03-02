@@ -115,12 +115,14 @@ final class NKTabBarPlatformView: NSObject, FlutterPlatformView {
         // On iOS 26+, skip custom appearance to let Liquid Glass apply automatically.
         // Only set explicit colors if provided.
         if #available(iOS 26.0, *) {
-            // Use default background appearance — on iOS 26 this gives liquid glass
             let appearance = UITabBarAppearance()
-            appearance.configureWithDefaultBackground()
-
             if let bgColor {
+                // Opaque background — no blur sampling, eliminates the navigation blink
+                appearance.configureWithOpaqueBackground()
                 appearance.backgroundColor = bgColor
+            } else {
+                // Pure Liquid Glass when the caller doesn't request a specific background
+                appearance.configureWithDefaultBackground()
             }
 
             if let selectedColor = selectedItemColor {
