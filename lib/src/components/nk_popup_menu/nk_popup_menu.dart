@@ -1,4 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import '../../models/nk_image_source.dart';
 import '../../utilities/nk_platform_builder.dart';
@@ -51,6 +53,17 @@ class NKPopupMenu extends StatefulWidget {
   /// The height of the button.
   final double height;
 
+  /// Custom gesture recognizers for the platform view.
+  ///
+  /// By default, uses a [LongPressGestureRecognizer] which allows parent
+  /// scrollables to still receive vertical drag gestures. The native UIButton
+  /// uses `showsMenuAsPrimaryAction` so it only needs tap/long-press, not
+  /// eager drag capture.
+  ///
+  /// Pass an empty set to let Flutter handle all gestures, or provide custom
+  /// recognizers for specific use cases.
+  final Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
+
   const NKPopupMenu({
     super.key,
     this.buttonLabel,
@@ -59,6 +72,7 @@ class NKPopupMenu extends StatefulWidget {
     this.onSelected,
     this.tintColor,
     this.height = 44.0,
+    this.gestureRecognizers,
   });
 
   @override
@@ -69,6 +83,15 @@ class _NKPopupMenuState extends State<NKPopupMenu>
     with NKPlatformViewMixin<NKPopupMenu> {
   @override
   String get channelPrefix => 'native_kit/popup_menu';
+
+  /// Default recognizers: LongPressGestureRecognizer allows parent scrollables
+  /// to claim vertical drags while still forwarding taps to the native UIButton.
+  static final Set<Factory<OneSequenceGestureRecognizer>>
+      _defaultGestureRecognizers = {
+    Factory<OneSequenceGestureRecognizer>(
+      () => LongPressGestureRecognizer(),
+    ),
+  };
 
   @override
   Future<void> handleMethodCall(MethodCall call) async {
@@ -129,7 +152,7 @@ class _NKPopupMenuState extends State<NKPopupMenu>
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: onPlatformViewCreated,
-          gestureRecognizers: eagerGestureRecognizers,
+          gestureRecognizers: widget.gestureRecognizers ?? _defaultGestureRecognizers,
         ),
         fallbackBuilder: (context) => _buildFallback(context),
       ),
